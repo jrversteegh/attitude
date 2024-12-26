@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "attitude"
+version = "0.1.0"
+description = "Library for manipulating object orientation, location, motion and rotation"
+authors = ["Jaap Versteegh <j.r.versteegh@gmail.com>"]
+license = "BSD"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[tool.poetry.group.dev.dependencies]
+invoke = "^2.2.0"
+cmake = "^3.31.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
