@@ -1,0 +1,16 @@
+﻿{
+  "configurations": [
+    {
+      "name": "x64-@CMAKE_BUILD_TYPE@",
+      "generator": "Visual Studio 17 2022 Win64",
+      "configurationType": "@CMAKE_BUILD_TYPE@",
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\build\\install\\${name}",
+      "buildCommandArgs": "",
+      "ctestCommandArgs": "",
+      "cmakeToolchain": "${projectDir}/build/conan_toolchain.cmake",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "cmakeCommandArgs": "-DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@ -DVERSION=@VERSION@ -DDATE=@DATE@ -DPYTHON_EXECUTABLE=%VIRTUAL_ENV%/Scripts/python"
+    }
+  ]
+}

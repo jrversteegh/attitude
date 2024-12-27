@@ -1,1 +1,9 @@
 /build
+/dist
+/.coverage
+/src/version.h
+/src/config.h
+/src/revision.txt
+/setup.py
+__pycache__
+*.pyc

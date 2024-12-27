@@ -32,9 +32,8 @@ def format(ctx):
     for cmd in (
         "black .",
         "isort .",
-        f"clang-format -i {' '.join(glob.glob('src/*.h'))}",
+        f"clang-format -i {' '.join(glob.glob('include/*.h'))}",
         f"clang-format -i {' '.join(glob.glob('src/*.cpp'))}",
-        f"clang-format -i {' '.join(glob.glob('drivers/sensor/*/*/*.[ch]'))}",
         "pandoc -s -o README.md README.rst",
     ):
         ctx.run(cmd, echo=True)
@@ -50,7 +49,10 @@ def check(ctx):
 @task
 def test(ctx):
     """Run tests"""
-    for cmd in ("pytest --cov --junitxml=build/reports/tests.xml",):
+    for cmd in (
+        "pytest --cov --junitxml=build/reports/tests.xml",
+        "ctest --output-on-failure --output-junit ctest_tests.xml --test-dir build",
+    ):
         ctx.run(cmd, echo=True)
 
 
@@ -64,7 +66,7 @@ def update_revision(ctx):
 
 
 @task
-def create_buildir():
+def create_buildir(ctx):
     """Build"""
     for cmd in ("mkdir -p build",):
         ctx.run(cmd, echo=True)
@@ -73,9 +75,8 @@ def create_buildir():
 @task(update_revision, create_buildir)
 def build(ctx):
     """Build"""
-    with ctx.cd("build"):
-        for cmd in ("cmake ..", "make -j 8"):
-            ctx.run(cmd, echo=True)
+    for cmd in ("poetry build",):
+        ctx.run(cmd, echo=True)
 
 
 @task
@@ -86,5 +87,4 @@ def clean(ctx):
 
 
 @task(clean, build)
-def rebuild(ctx):
-    ...
+def rebuild(ctx): ...

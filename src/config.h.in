@@ -1,0 +1,12 @@
+/**
+ * \file
+ * \brief Provide program compilation configuration
+ *
+ * \author J.R. Versteegh <j.r.versteegh@gmail.com>
+ *
+ * Build configuration
+ */
+
+/*
+Condition includes and definitions of optional packages here
+*/
