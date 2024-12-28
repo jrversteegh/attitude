@@ -5,5 +5,8 @@
 /src/config.h
 /src/revision.txt
 /setup.py
+/CMakeSettings.json
+/CMakeUserPresets.json
+
 __pycache__
 *.pyc

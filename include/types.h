@@ -1,11 +1,15 @@
-#ifndef LIBVECQUAT_TYPES_H__
-#define LIBVECQUAT_TYPES_H__
+#ifndef ATTITUDE_TYPES_H__
+#define ATTITUDE_TYPES_H__
 
-namespace vecquat {
+#include <iostream>
+
+#include <fmt/format.h>
+
+namespace attitude {
 
 using Number = float;
 
-struct Vector {
+struct Vector3 {
   Number x() const {
     return components_[0];
   }
@@ -15,15 +19,15 @@ struct Vector {
   Number z() const {
     return components_[2];
   }
-  Vector& set_x(Number const value) {
+  Vector3& set_x(Number const value) {
     components_[0] = value;
     return *this;
   }
-  Vector& set_y(Number const value) {
+  Vector3& set_y(Number const value) {
     components_[1] = value;
     return *this;
   }
-  Vector& set_z(Number const value) {
+  Vector3& set_z(Number const value) {
     components_[2] = value;
     return *this;
   }
@@ -33,23 +37,32 @@ struct Vector {
   Number& operator[](int i) {
     return components_[i];
   }
-  Vector(Number x, Number y, Number z) : components_{x, y, z} {}
-  Vector(Vector const& v) : components_{v.components_[0], v.components_[1], v.components_[2]} {}
+  Vector3(Number x, Number y, Number z) : components_{x, y, z} {}
+  Vector3(Vector3 const& v) : components_{v.components_[0], v.components_[1], v.components_[2]} {}
 
 private:
   Number components_[3] = {0, 0, 0};
 };
 
-inline Number operator*(Vector const& v1, Vector const& v2) {
+inline Number operator*(Vector3 const& v1, Vector3 const& v2) {
   return v1.x() * v2.x() + v1.y() * v2.y() + v1.z() * v2.z();
 }
 
-inline Vector operator+(Vector const& v1, Vector const& v2) {
-  return Vector(v1.x() + v2.x(), v1.y() + v2.y(), v1.z() + v2.z());
+inline Vector3 operator+(Vector3 const& v1, Vector3 const& v2) {
+  return Vector3{v1.x() + v2.x(), v1.y() + v2.y(), v1.z() + v2.z()};
+}
+
+inline bool operator==(Vector3 const& v1, Vector3 const& v2) {
+  return v1.x() == v2.x() && v1.y() == v2.y() && v1.z() == v2.z();
+}
+
+inline std::ostream& operator<<(std::ostream& os, Vector3 const& v) {
+  os << fmt::format("%f, %f, %f", v.x(), v.y(), v.z());
+  return os;
 }
 
 struct Quaternion {};
 
-} // namespace vecquat
+} // namespace attitude
 
 #endif

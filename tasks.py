@@ -66,13 +66,13 @@ def update_revision(ctx):
 
 
 @task
-def create_buildir(ctx):
+def create_build_dir(ctx):
     """Build"""
     for cmd in ("mkdir -p build",):
         ctx.run(cmd, echo=True)
 
 
-@task(update_revision, create_buildir)
+@task(update_revision, create_build_dir)
 def build(ctx):
     """Build"""
     for cmd in ("poetry build",):

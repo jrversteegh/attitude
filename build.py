@@ -61,7 +61,7 @@ def build_module(build_type, config=""):
     version, date = get_project_version_and_date()
     with dir_context(build_dir):
         if os.system(
-            f"conan install {script_dir} --build missing -s build_type={build_type}"
+            f"conan install -of . --build missing -s build_type={build_type} {script_dir}"
         ):
             raise Exception("Failed to run conan")
         if os.system(
@@ -94,7 +94,7 @@ class CopyCommand(Command):
         return result
 
     def get_source_files(self):
-        return glob.glob(str(properxx_dir / "*.*"))
+        return glob.glob(str(attitudexx_dir / "*.*"))
 
     def run(self):
         module_files = self.get_outputs()
@@ -112,7 +112,7 @@ def build(setup_kwargs):
     build_module(build_type)
     ext_modules = [
         (
-            "properxx",
+            "attitudexx",
             [glob.glob(str(build_dir / build_type / f"{module_name}.cp*.*"))[0]],
         ),
     ]

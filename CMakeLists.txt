@@ -2,6 +2,8 @@
 
 cmake_minimum_required(VERSION 3.20.0)
 
+project(attitude)
+
 set (CMAKE_CXX_STANDARD 20)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 set (BUILD_SHARED_LIBS ON)
@@ -13,7 +15,13 @@ else()
   set(MODULE_OUTPUT_DIR "${CMAKE_BUILD_TYPE}")
 endif()
 
-project(attitude)
+find_package(pybind11 REQUIRED)
+find_package(Boost 1.80.0 REQUIRED
+  system date_time filesystem log log_setup unit_test_framework regex coroutine chrono
+  program_options
+)
+find_package(Threads REQUIRED)
+find_package(fmt REQUIRED)
 
 FILE(GLOB lib_sources src/*.cpp)
 
@@ -24,12 +32,13 @@ add_library(attitude_shared SHARED $<TARGET_OBJECTS:attitude>)
 add_library(attitude_static STATIC $<TARGET_OBJECTS:attitude>)
 
 execute_process(COMMAND git rev-parse --short HEAD OUTPUT_VARIABLE GITREV)
-set(PROPER_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
+set(ATTITUDE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
+set(ATTITUDE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/attitudexx")
-set(VERSION_H_IN ${PROPER_SOURCE_DIR}/version.h.in)
-set(VERSION_H ${PROPER_SOURCE_DIR}/version.h)
-set(CONFIG_H_IN ${PROPER_SOURCE_DIR}/config.h.in)
-set(CONFIG_H ${PROPER_SOURCE_DIR}/config.h)
+set(VERSION_H_IN ${ATTITUDE_SOURCE_DIR}/version.h.in)
+set(VERSION_H ${ATTITUDE_SOURCE_DIR}/version.h)
+set(CONFIG_H_IN ${ATTITUDE_SOURCE_DIR}/config.h.in)
+set(CONFIG_H ${ATTITUDE_SOURCE_DIR}/config.h)
 configure_file(${VERSION_H_IN} ${VERSION_H} @ONLY)
 configure_file(${CONFIG_H_IN} ${CONFIG_H} @ONLY)
 configure_file(${CMAKE_SOURCE_DIR}/cmake/CMakeSettings.json.in ${CMAKE_SOURCE_DIR}/CMakeSettings.json @ONLY)
@@ -37,7 +46,7 @@ configure_file(${CMAKE_SOURCE_DIR}/cmake/CMakeSettings.json.in ${CMAKE_SOURCE_DI
 enable_testing()
 
 message("Module output directory: ${MODULE_OUTPUT_DIR}")
-set_target_properties(attitudexx PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${MODULE_OUTPUT_DIR})
+set_target_properties(attitude PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${MODULE_OUTPUT_DIR})
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     include(CTest)
@@ -45,13 +54,14 @@ endif()
 
 macro(new_test NEW_TEST)
   set(TEST_SOURCES ${ARGN})
-  list(TRANSFORM TEST_SOURCES PREPEND ${PROPER_SOURCE_DIR}/ )
+  list(TRANSFORM TEST_SOURCES PREPEND ${ATTITUDE_SOURCE_DIR}/ )
   add_executable(${NEW_TEST}
     ${TEST_DIR}/${NEW_TEST}.cpp
     ${TEST_SOURCES}
   )
   target_include_directories(${NEW_TEST} PRIVATE
-    ${PROPER_SOURCE_DIR}
+    ${ATTITUDE_INCLUDE_DIR}
+    ${ATTITUDE_SOURCE_DIR}
   )
   set_target_properties(${NEW_TEST} PROPERTIES
     ${TEST_LINK_FLAGS}
