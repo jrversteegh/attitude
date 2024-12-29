@@ -23,13 +23,12 @@ find_package(Boost 1.80.0 REQUIRED
 find_package(Threads REQUIRED)
 find_package(fmt REQUIRED)
 
-FILE(GLOB lib_sources src/*.cpp)
-
-add_library(attitude OBJECT ${lib_sources})
-set_property(TARGET attitude PROPERTY POSITION_INDEPENDENT_CODE ON)
-
-add_library(attitude_shared SHARED $<TARGET_OBJECTS:attitude>)
-add_library(attitude_static STATIC $<TARGET_OBJECTS:attitude>)
+execute_process(COMMAND python-config --includes OUTPUT_VARIABLE Python_INCLUDES)
+include_directories(
+  ${Boost_INCLUDE_DIR}
+  ${fmt_INCLUDE_DIR}
+  ${pybind11_INCLUDE_DIR}
+)
 
 execute_process(COMMAND git rev-parse --short HEAD OUTPUT_VARIABLE GITREV)
 set(ATTITUDE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -41,7 +40,22 @@ set(CONFIG_H_IN ${ATTITUDE_SOURCE_DIR}/config.h.in)
 set(CONFIG_H ${ATTITUDE_SOURCE_DIR}/config.h)
 configure_file(${VERSION_H_IN} ${VERSION_H} @ONLY)
 configure_file(${CONFIG_H_IN} ${CONFIG_H} @ONLY)
+if (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Windows")
 configure_file(${CMAKE_SOURCE_DIR}/cmake/CMakeSettings.json.in ${CMAKE_SOURCE_DIR}/CMakeSettings.json @ONLY)
+endif()
+
+FILE(GLOB lib_sources src/*.cpp)
+
+add_library(attitude OBJECT ${lib_sources})
+set_property(TARGET attitude PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_link_libraries(attitude PRIVATE
+  fmt::fmt
+)
+add_library(attitude_shared SHARED $<TARGET_OBJECTS:attitude>)
+add_library(attitude_static STATIC $<TARGET_OBJECTS:attitude>)
+set_target_properties(attitude_shared PROPERTIES OUTPUT_NAME attitude)
+set_target_properties(attitude_static PROPERTIES OUTPUT_NAME attitude)
+pybind11_add_module(attitudexx MODULE ${ATTITUDE_SOURCE_DIR}/attitudexx/binding.cpp ${lib_sources})
 
 enable_testing()
 

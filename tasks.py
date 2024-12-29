@@ -51,7 +51,7 @@ def test(ctx):
     """Run tests"""
     for cmd in (
         "pytest --cov --junitxml=build/reports/tests.xml",
-        "ctest --output-on-failure --output-junit ctest_tests.xml --test-dir build",
+        "ctest --output-junit ctest_tests.xml --test-dir build",
     ):
         ctx.run(cmd, echo=True)
 

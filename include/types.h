@@ -2,6 +2,7 @@
 #define ATTITUDE_TYPES_H__
 
 #include <iostream>
+#include <string>
 
 #include <fmt/format.h>
 
@@ -10,6 +11,14 @@ namespace attitude {
 using Number = float;
 
 struct Vector3 {
+  Vector3(Number x, Number y, Number z) : components_{x, y, z} {}
+  Vector3(Vector3 const& v)
+      : components_{v.components_[0], v.components_[1], v.components_[2]} {}
+
+  std::string to_string() const {
+    return fmt::format("%f, %f, %f", x(), y(), z());
+  }
+
   Number x() const {
     return components_[0];
   }
@@ -37,8 +46,6 @@ struct Vector3 {
   Number& operator[](int i) {
     return components_[i];
   }
-  Vector3(Number x, Number y, Number z) : components_{x, y, z} {}
-  Vector3(Vector3 const& v) : components_{v.components_[0], v.components_[1], v.components_[2]} {}
 
 private:
   Number components_[3] = {0, 0, 0};
@@ -57,7 +64,7 @@ inline bool operator==(Vector3 const& v1, Vector3 const& v2) {
 }
 
 inline std::ostream& operator<<(std::ostream& os, Vector3 const& v) {
-  os << fmt::format("%f, %f, %f", v.x(), v.y(), v.z());
+  os << v.to_string();
   return os;
 }
 

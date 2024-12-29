@@ -1,7 +1,6 @@
 import configparser
 import contextlib
 import errno
-import glob
 import os
 import platform
 import shutil
@@ -19,7 +18,7 @@ module_name = "attitudexx"
 on_windows = platform.system().startswith("Win")
 script_dir = Path(os.path.dirname(os.path.realpath(__file__)))
 source_dir = script_dir / "src"
-attitudexx_dir = source_dir 
+attitudexx_dir = source_dir
 build_dir = script_dir / "build"
 python = sys.executable
 python_dir = Path(os.path.dirname(python))
@@ -61,13 +60,13 @@ def build_module(build_type, config=""):
     version, date = get_project_version_and_date()
     with dir_context(build_dir):
         if os.system(
-            f"conan install -of . --build missing -s build_type={build_type} {script_dir}"
+            f"conan install -of conan --build missing -s build_type={build_type} {script_dir}"
         ):
             raise Exception("Failed to run conan")
         if os.system(
             f"{cmake} -DPYTHON_EXECUTABLE={python} -DCMAKE_BUILD_TYPE={build_type}"
             f" -DVERSION={version} -DDATE={date}"
-            f" -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake {config} {win_flags} {script_dir}"
+            f" -DCMAKE_TOOLCHAIN_FILE=conan/conan_toolchain.cmake {config} {win_flags} {script_dir}"
         ):
             raise Exception("Failed to configure with cmake")
         if os.system(f"{cmake} --build . {config_flag} --verbose --parallel 4"):
@@ -94,7 +93,7 @@ class CopyCommand(Command):
         return result
 
     def get_source_files(self):
-        return glob.glob(str(attitudexx_dir / "*.*"))
+        return [str(f) for f in attitudexx_dir.glob("*.*")]
 
     def run(self):
         module_files = self.get_outputs()
@@ -109,11 +108,12 @@ def build(setup_kwargs):
         if os.path.exists(script_dir / ".debug") or "DEBUG" in os.environ
         else "Release"
     )
+    output_dir = build_dir / build_type if on_windows else build_dir
     build_module(build_type)
     ext_modules = [
         (
             "attitudexx",
-            [glob.glob(str(build_dir / build_type / f"{module_name}.cp*.*"))[0]],
+            list(output_dir.glob(f"{module_name}.cpython*.*")),
         ),
     ]
     setup_kwargs.update(

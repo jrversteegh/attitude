@@ -7,6 +7,7 @@
 /setup.py
 /CMakeSettings.json
 /CMakeUserPresets.json
+/src/*.so
 
 __pycache__
 *.pyc
