@@ -11,44 +11,57 @@ namespace attitude {
 using Number = float;
 
 struct Vector3 {
-  Vector3(Number x, Number y, Number z) : components_{x, y, z} {}
-  Vector3(Vector3 const& v)
-      : components_{v.components_[0], v.components_[1], v.components_[2]} {}
+  Vector3(Number x, Number y, Number z) : c_{x, y, z} {}
+  Vector3(Vector3 const& v) : c_{v.x(), v.y(), v.z()} {}
 
   std::string to_string() const {
     return fmt::format("%f, %f, %f", x(), y(), z());
   }
 
   Number x() const {
-    return components_[0];
+    return c_[0];
   }
   Number y() const {
-    return components_[1];
+    return c_[1];
   }
   Number z() const {
-    return components_[2];
+    return c_[2];
   }
   Vector3& set_x(Number const value) {
-    components_[0] = value;
+    c_[0] = value;
     return *this;
   }
   Vector3& set_y(Number const value) {
-    components_[1] = value;
+    c_[1] = value;
     return *this;
   }
   Vector3& set_z(Number const value) {
-    components_[2] = value;
+    c_[2] = value;
     return *this;
   }
   Number operator[](int i) const {
-    return components_[i];
+    return c_[i];
   }
   Number& operator[](int i) {
-    return components_[i];
+    return c_[i];
+  }
+
+  Vector3& operator+=(Vector3 const& v) {
+    c_[0] += v.x();
+    c_[1] += v.y();
+    c_[2] += v.z();
+    return *this;
+  }
+
+  Vector3& operator*=(Number const n) {
+    c_[0] *= n;
+    c_[1] *= n;
+    c_[2] *= n;
+    return *this;
   }
 
 private:
-  Number components_[3] = {0, 0, 0};
+  Number c_[3] = {0, 0, 0};
 };
 
 inline Number operator*(Vector3 const& v1, Vector3 const& v2) {
@@ -68,7 +81,28 @@ inline std::ostream& operator<<(std::ostream& os, Vector3 const& v) {
   return os;
 }
 
-struct Quaternion {};
+struct Quaternion {
+  Quaternion(Number const a, Number const b, Number const c, Number const d)
+      : c_{a, b, c, d} {}
+  Quaternion(Quaternion const& q) : c_{q.a(), q.b(), q.c(), q.d()} {}
+  Quaternion(Vector3 const& v) : c_{0, v.x(), v.y(), v.z()} {}
+
+  Number a() const {
+    return c_[0];
+  }
+  Number b() const {
+    return c_[1];
+  }
+  Number c() const {
+    return c_[2];
+  }
+  Number d() const {
+    return c_[3];
+  }
+
+private:
+  Number c_[4] = {0, 0, 0, 0};
+};
 
 } // namespace attitude
 
