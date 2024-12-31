@@ -1,6 +1,7 @@
 #ifndef ATTITUDE_TYPES_H__
 #define ATTITUDE_TYPES_H__
 
+#include <cmath>
 #include <iostream>
 #include <string>
 
@@ -60,6 +61,10 @@ struct Vector3 {
     return *this;
   }
 
+  Vector3& operator/=(Number const n) {
+    return this->operator*=(1 / n);
+  }
+
 private:
   Number c_[3] = {0, 0, 0};
 };
@@ -98,6 +103,41 @@ struct Quaternion {
   }
   Number d() const {
     return c_[3];
+  }
+
+  Quaternion adjoint() const {
+    return Quaternion(c_[0], -c_[1], -c_[2], -c_[3]);
+  }
+
+  Number norm() const {
+    return std::sqrt(c_[0] * c_[0] + c_[1] * c_[1] + c_[2] * c_[2] +
+                     c_[3] * c_[3]);
+  }
+
+  Quaternion inverse() const {
+    Quaternion result = adjoint();
+    result /= norm();
+    return result;
+  }
+
+  Quaternion& operator+=(Quaternion const& q) {
+    c_[0] += q.a();
+    c_[1] += q.b();
+    c_[2] += q.c();
+    c_[3] += q.d();
+    return *this;
+  }
+
+  Quaternion& operator*=(Number const n) {
+    c_[0] *= n;
+    c_[1] *= n;
+    c_[2] *= n;
+    c_[3] *= n;
+    return *this;
+  }
+
+  Quaternion& operator/=(Number const n) {
+    return this->operator*=(1 / n);
   }
 
 private:
