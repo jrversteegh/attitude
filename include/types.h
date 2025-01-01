@@ -144,6 +144,8 @@ private:
   Number c_[4] = {0, 0, 0, 0};
 };
 
+extern Quaternion operator*(Quaternion const& q1, Quaternion const& q2);
+
 } // namespace attitude
 
 #endif
