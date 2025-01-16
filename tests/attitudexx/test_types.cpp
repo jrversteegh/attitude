@@ -25,5 +25,12 @@ BOOST_AUTO_TEST_CASE(vector_add_test) {
   BOOST_TEST(result == expected);
 }
 
+BOOST_AUTO_TEST_CASE(quaternion_mul_test) {
+  Quaternion q1{1,2,3,4};
+  Quaternion q2{2,2,1,4};
+  auto result = q1 * q2;
+  auto expected = Quaternion{8, 8, 8, 8};
+  BOOST_TEST(result == expected);
+}
 
 BOOST_AUTO_TEST_SUITE_END();
