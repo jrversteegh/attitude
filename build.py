@@ -11,13 +11,14 @@ from datetime import datetime
 from pathlib import Path
 
 import tomli
-from setuptools import Command
+from setuptools import Extension, Command
+from setuptools.command import build_ext
 
 module_name = "attitudexx"
 
 on_windows = platform.system().startswith("Win")
 script_dir = Path(os.path.dirname(os.path.realpath(__file__)))
-source_dir = script_dir / "src"
+source_dir = script_dir / "src" / "attitude"
 attitudexx_dir = source_dir
 build_dir = script_dir / "build"
 python = sys.executable
@@ -74,6 +75,7 @@ def build_module(build_type, config=""):
 
 
 class CopyCommand(Command):
+    user_options = [("inplace", None, "inplace")]
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ext_modules = args[0].ext_modules
@@ -81,14 +83,15 @@ class CopyCommand(Command):
     def initialize_options(self):
         self.editable_mode = False
         self.build_lib = None
+        self.inplace = None
 
     def finalize_options(self):
         self.set_undefined_options("build_py", ("build_lib", "build_lib"))
 
     def get_outputs(self):
         result = []
-        for module_name, module_files in self.ext_modules:
-            for module_file in module_files:
+        for ext in self.ext_modules:
+            for module_file in ext.extra_objects:
                 result.append(module_file)
         return result
 
@@ -96,8 +99,7 @@ class CopyCommand(Command):
         return [str(f) for f in attitudexx_dir.glob("*.*")]
 
     def run(self):
-        module_files = self.get_outputs()
-        for module_file in module_files:
+        for module_file in self.get_outputs():
             self.copy_file(module_file, source_dir)
             self.copy_file(module_file, self.build_lib)
 
@@ -110,10 +112,10 @@ def build(setup_kwargs):
     )
     output_dir = build_dir / build_type if on_windows else build_dir
     build_module(build_type)
-    ext_modules = [
-        (
-            "attitudexx",
-            list(output_dir.glob(f"{module_name}.cpython*.*")),
+    ext_modules = [Extension(
+            name = "attitudexx",
+            sources = [],
+            extra_objects = list(output_dir.glob(f"{module_name}.cpython*.*")),
         ),
     ]
     setup_kwargs.update(

@@ -92,6 +92,7 @@ macro(new_test NEW_TEST)
     Boost::chrono
     Boost::coroutine
     Boost::unit_test_framework
+    attitude_static
   )
   add_test(${NEW_TEST} tests/${NEW_TEST})
 endmacro()
