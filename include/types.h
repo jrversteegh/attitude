@@ -19,17 +19,16 @@ namespace attitude {
 
 using Number = float;
 
-template<typename T>
-constexpr Number dot(T const& v1, T const& v2) {
+template <typename T> constexpr Number dot(T const& v1, T const& v2) {
   return std::inner_product(v1.cbegin(), v1.cend(), v2.cbegin(), 0);
 }
 
-template <int N>
-struct Components {
+template <int N> struct Components {
 
-  template <typename... Args, typename = std::enable_if_t<(sizeof...(Args) == N)>>
-  Components(Args&&... args): c_{std::forward<Args>(args)...} {}
-  Components(Components const& cs): c_{cs.c_} {}
+  template <typename... Args,
+            typename = std::enable_if_t<(sizeof...(Args) == N)>>
+  Components(Args&&... args) : c_{std::forward<Args>(args)...} {}
+  Components(Components const& cs) : c_{cs.c_} {}
 
   bool equals(Components<N> const& other) const {
     return this->c_ == other.c_;
@@ -43,24 +42,20 @@ struct Components {
     return c_[i];
   }
 
-  template<int I=0>
-  Components<N>& operator+=(Components<N> const& v) {
+  template <int I = 0> Components<N>& operator+=(Components<N> const& v) {
     if constexpr (I < N) {
       c_[I] += v.c_[I];
-      return this->operator+=<I+1>(v);
-    }
-    else {
+      return this->operator+= <I + 1>(v);
+    } else {
       return *this;
     }
   }
 
-  template<int I=0>
-  Components<N>& operator*=(Number const n) {
+  template <int I = 0> Components<N>& operator*=(Number const n) {
     if constexpr (I < N) {
       c_[I] *= n;
-      return this->operator*=<I+1>(n);
-    }
-    else {
+      return this->operator*= <I + 1>(n);
+    } else {
       return *this;
     }
   }
@@ -76,17 +71,19 @@ struct Components {
     return c_.cend();
   }
 
-  constexpr size_t size() const { return N; }
+  constexpr size_t size() const {
+    return N;
+  }
 
   constexpr auto slice(int const from, int const to) const {
-    return const_span<Number, size()>{c_}.subspan<from, to - from>();
+    return const_span(c_).template subspan<from, to - from>();
   }
 
 private:
   std::array<Number, N> c_{};
 };
 
-struct Vector3: public Components<3> {
+struct Vector3 : public Components<3> {
   Vector3(Number x, Number y, Number z) : Components<3>{x, y, z} {}
   using Components<3>::Components;
 
@@ -115,7 +112,6 @@ struct Vector3: public Components<3> {
     this->operator[](2) = value;
     return *this;
   }
-
 };
 
 inline Number operator*(Vector3 const& v1, Vector3 const& v2) {
@@ -130,8 +126,7 @@ inline bool operator==(Vector3 const& v1, Vector3 const& v2) {
   return v1.x() == v2.x() && v1.y() == v2.y() && v1.z() == v2.z();
 }
 
-
-struct Quaternion: Components<4> {
+struct Quaternion : Components<4> {
   Quaternion(Quaternion const& q) : Components<4>{q.a(), q.b(), q.c(), q.d()} {}
   Quaternion(Vector3 const& v) : Components<4>{0, v.x(), v.y(), v.z()} {}
   using Components<4>::Components;
@@ -166,7 +161,6 @@ struct Quaternion: Components<4> {
     result /= norm();
     return result;
   }
-
 };
 
 extern Quaternion operator*(Quaternion const& q1, Quaternion const& q2);
@@ -176,8 +170,7 @@ concept HasEquals = requires(T t, T const& v) {
   { t.equals(v) } -> std::same_as<bool>;
 };
 
-template <HasEquals T>
-inline bool operator==(T const& v1, T const& v2) {
+template <HasEquals T> inline bool operator==(T const& v1, T const& v2) {
   return v1.equals(v2);
 }
 
@@ -192,8 +185,6 @@ std::ostream& operator<<(std::ostream& os, T const& v) {
   return os;
 }
 
-
 } // namespace attitude
-
 
 #endif

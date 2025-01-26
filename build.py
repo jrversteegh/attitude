@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 
 import tomli
-from setuptools import Extension, Command
+from setuptools import Command, Extension
 from setuptools.command import build_ext
 
 module_name = "attitudexx"
@@ -76,6 +76,7 @@ def build_module(build_type, config=""):
 
 class CopyCommand(Command):
     user_options = [("inplace", None, "inplace")]
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ext_modules = args[0].ext_modules
@@ -112,10 +113,11 @@ def build(setup_kwargs):
     )
     output_dir = build_dir / build_type if on_windows else build_dir
     build_module(build_type)
-    ext_modules = [Extension(
-            name = "attitudexx",
-            sources = [],
-            extra_objects = list(output_dir.glob(f"{module_name}.cpython*.*")),
+    ext_modules = [
+        Extension(
+            name="attitudexx",
+            sources=[],
+            extra_objects=list(output_dir.glob(f"{module_name}.cpython*.*")),
         ),
     ]
     setup_kwargs.update(

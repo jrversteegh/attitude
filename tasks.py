@@ -75,7 +75,7 @@ def create_build_dir(ctx):
 @task(update_revision, create_build_dir)
 def build(ctx):
     """Build"""
-    for cmd in ("poetry build",):
+    for cmd in ("poetry build -vv",):
         ctx.run(cmd, echo=True)
 
 
