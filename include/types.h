@@ -113,6 +113,9 @@ concept IsSubscriptable = requires(T& t, I const& i) {
   { t[i] };
 };
 
+template <class T, std::size_t S>
+concept HasSize = requires { T::size == S; };
+
 template <typename T>
 concept HasToString = requires(T t) {
   { t.to_string() } -> std::convertible_to<std::string>;
@@ -187,7 +190,9 @@ struct Vector3 : public Components<3> {
   }
 };
 
-template <IsSubscriptable T> inline Vector3 cross(T const& v1, T const& v2) {
+template <IsSubscriptable T>
+  requires HasSize<T, 3>
+inline Vector3 cross(T const& v1, T const& v2) {
   return Vector3{v1[1] * v2[2] - v1[2] * v2[1], v1[2] * v2[0] - v1[0] * v2[2],
                  v1[0] * v2[1] - v1[1] * v2[0]};
 }
