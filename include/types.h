@@ -1,7 +1,6 @@
 #ifndef ATTITUDE_TYPES_H__
 #define ATTITUDE_TYPES_H__
 
-#include <algorithm>
 #include <array>
 #include <cmath>
 #include <concepts>
@@ -23,7 +22,9 @@ template <typename T> constexpr Number dot(T const& v1, T const& v2) {
   return std::inner_product(v1.cbegin(), v1.cend(), v2.cbegin(), 0);
 }
 
-template <int N> struct Components {
+template <std::size_t N> struct Components {
+  constexpr static std::size_t const size = N;
+  using value_type = Number;
 
   template <typename... Args,
             typename = std::enable_if_t<(sizeof...(Args) == N)>>
@@ -71,12 +72,9 @@ template <int N> struct Components {
     return c_.cend();
   }
 
-  constexpr size_t size() const {
-    return N;
-  }
-
-  constexpr auto slice(int const from, int const to) const {
-    return const_span(c_).template subspan<from, to - from>();
+  constexpr auto slice(std::size_t const from, std::size_t const to,
+                       std::size_t const step = 1) const {
+    return Slice(*this, from, to, step);
   }
 
 private:
@@ -128,7 +126,7 @@ inline bool operator==(Vector3 const& v1, Vector3 const& v2) {
 
 struct Quaternion : Components<4> {
   Quaternion(Quaternion const& q) : Components<4>{q.a(), q.b(), q.c(), q.d()} {}
-  Quaternion(Vector3 const& v) : Components<4>{0, v.x(), v.y(), v.z()} {}
+  Quaternion(Vector3 const& v) : Components<4>{0.f, v.x(), v.y(), v.z()} {}
   using Components<4>::Components;
 
   std::string to_string() const {

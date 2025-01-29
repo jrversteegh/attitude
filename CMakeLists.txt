@@ -34,7 +34,7 @@ include_directories(
 execute_process(COMMAND git rev-parse --short HEAD OUTPUT_VARIABLE GITREV)
 set(ATTITUDE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(ATTITUDE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
-set(TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/attitudexx")
+set(TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests")
 set(VERSION_H_IN ${ATTITUDE_SOURCE_DIR}/version.h.in)
 set(VERSION_H ${ATTITUDE_SOURCE_DIR}/version.h)
 set(CONFIG_H_IN ${ATTITUDE_SOURCE_DIR}/config.h.in)
