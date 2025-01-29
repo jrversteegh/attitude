@@ -44,7 +44,7 @@ template <typename T> struct Slice {
 
   constexpr value_type operator[](std::size_t const index) const {
     std::size_t const offset = begin_ + index * stride_;
-    if (offset < 0 || offset >= end_) {
+    if (offset >= end_) {
       throw std::out_of_range("Slice index out of range");
     }
     return array_[offset];
@@ -52,7 +52,7 @@ template <typename T> struct Slice {
 
   constexpr value_type& operator[](std::size_t const index) {
     std::size_t const offset = begin_ + index * stride_;
-    if (offset < 0 || offset >= end_) {
+    if (offset >= end_) {
       throw std::out_of_range("Slice index out of range");
     }
     return array_[offset];
