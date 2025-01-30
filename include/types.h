@@ -4,13 +4,12 @@
 #include <array>
 #include <cmath>
 #include <concepts>
+#include <format>
 #include <initializer_list>
 #include <iostream>
 #include <numeric>
 #include <string>
 #include <type_traits>
-
-#include <fmt/format.h>
 
 #include "utils.h"
 
@@ -164,7 +163,7 @@ struct Vector3 : public Components<3> {
   using Components<3>::Components;
 
   std::string to_string() const {
-    return fmt::format("{:f}, {:f}, {:f}", x(), y(), z());
+    return std::format("{:f}, {:f}, {:f}", x(), y(), z());
   }
 
   constexpr Number x() const {
@@ -207,7 +206,7 @@ struct Quaternion : Components<4> {
   using Components<4>::Components;
 
   std::string to_string() const {
-    return fmt::format("{:f}, {:f}, {:f}, {:f}", a(), b(), c(), d());
+    return std::format("{:f}, {:f}, {:f}, {:f}", a(), b(), c(), d());
   }
 
   constexpr Number a() const {

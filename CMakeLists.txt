@@ -8,6 +8,9 @@ set (CMAKE_CXX_COMPILER g++-14)
 set (CMAKE_CXX_STANDARD 20)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 set (BUILD_SHARED_LIBS ON)
+if(NOT DEFINED ${CMAKE_BUILD_TYPE})
+  set (CMAKE_BUILD_TYPE "Release")
+endif()
 if (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Windows")
   set(TEST_LINK_FLAGS "")
   set(MODULE_OUTPUT_DIR ".")
@@ -16,19 +19,22 @@ else()
   set(MODULE_OUTPUT_DIR "${CMAKE_BUILD_TYPE}")
 endif()
 
-find_package(pybind11 REQUIRED)
-find_package(Boost 1.80.0 REQUIRED
-  system date_time filesystem log log_setup unit_test_framework regex coroutine chrono
-  program_options
-)
-find_package(Threads REQUIRED)
-find_package(fmt REQUIRED)
+if(BUILD_PYTHON)
+  find_package(pybind11 REQUIRED)
+  execute_process(COMMAND python-config --includes OUTPUT_VARIABLE Python_INCLUDES)
+endif()
+if(BUILD_TESTS)
+  find_package(Boost 1.80.0 REQUIRED
+    system date_time filesystem log log_setup unit_test_framework regex coroutine chrono
+    program_options
+  )
+  find_package(fmt REQUIRED)
+endif()
 
-execute_process(COMMAND python-config --includes OUTPUT_VARIABLE Python_INCLUDES)
 include_directories(
   ${Boost_INCLUDE_DIR}
-  ${fmt_INCLUDE_DIR}
   ${pybind11_INCLUDE_DIR}
+  ${fmt_INCLUDE_DIR}
 )
 
 execute_process(COMMAND git rev-parse --short HEAD OUTPUT_VARIABLE GITREV)
@@ -48,56 +54,57 @@ endif()
 FILE(GLOB lib_sources src/*.cpp)
 
 add_library(attitude OBJECT ${lib_sources})
-set_property(TARGET attitude PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_link_libraries(attitude PRIVATE
-  fmt::fmt
-)
-add_library(attitude_shared SHARED $<TARGET_OBJECTS:attitude>)
+if(BUILD_SHARED)
+  set_property(TARGET attitude PROPERTY POSITION_INDEPENDENT_CODE ON)
+  add_library(attitude_shared SHARED $<TARGET_OBJECTS:attitude>)
+  set_target_properties(attitude_shared PROPERTIES OUTPUT_NAME attitude)
+endif()
 add_library(attitude_static STATIC $<TARGET_OBJECTS:attitude>)
-set_target_properties(attitude_shared PROPERTIES OUTPUT_NAME attitude)
 set_target_properties(attitude_static PROPERTIES OUTPUT_NAME attitude)
-pybind11_add_module(attitudexx MODULE ${ATTITUDE_SOURCE_DIR}/attitudexx/binding.cpp ${lib_sources})
+if(BUILD_PYTHON)
+  pybind11_add_module(attitudexx MODULE ${ATTITUDE_SOURCE_DIR}/attitudexx/binding.cpp ${lib_sources})
+endif()
 
 enable_testing()
 
 message("Module output directory: ${MODULE_OUTPUT_DIR}")
 set_target_properties(attitude PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${MODULE_OUTPUT_DIR})
 
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-    include(CTest)
+if(BUILD_TESTS)
+  if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+      include(CTest)
+  endif()
+
+  macro(new_test NEW_TEST)
+    set(TEST_SOURCES ${ARGN})
+    list(TRANSFORM TEST_SOURCES PREPEND ${ATTITUDE_SOURCE_DIR}/ )
+    add_executable(${NEW_TEST}
+      ${TEST_DIR}/${NEW_TEST}.cpp
+      ${TEST_SOURCES}
+    )
+    target_include_directories(${NEW_TEST} PRIVATE
+      ${ATTITUDE_INCLUDE_DIR}
+      ${ATTITUDE_SOURCE_DIR}
+    )
+    set_target_properties(${NEW_TEST} PROPERTIES
+      ${TEST_LINK_FLAGS}
+      RUNTIME_OUTPUT_DIRECTORY tests
+    )
+    target_link_libraries(${NEW_TEST} PRIVATE
+      fmt::fmt
+      Boost::system
+      Boost::filesystem
+      Boost::program_options
+      Boost::log
+      Boost::log_setup
+      Boost::thread
+      Boost::chrono
+      Boost::coroutine
+      Boost::unit_test_framework
+      attitude_static
+    )
+    add_test(${NEW_TEST} tests/${NEW_TEST})
+  endmacro()
+
+  new_test(test_types)
 endif()
-
-macro(new_test NEW_TEST)
-  set(TEST_SOURCES ${ARGN})
-  list(TRANSFORM TEST_SOURCES PREPEND ${ATTITUDE_SOURCE_DIR}/ )
-  add_executable(${NEW_TEST}
-    ${TEST_DIR}/${NEW_TEST}.cpp
-    ${TEST_SOURCES}
-  )
-  target_include_directories(${NEW_TEST} PRIVATE
-    ${ATTITUDE_INCLUDE_DIR}
-    ${ATTITUDE_SOURCE_DIR}
-  )
-  set_target_properties(${NEW_TEST} PROPERTIES
-    ${TEST_LINK_FLAGS}
-    RUNTIME_OUTPUT_DIRECTORY tests
-  )
-  target_link_libraries(${NEW_TEST} PRIVATE
-    fmt::fmt
-    Boost::system
-    Boost::filesystem
-    Boost::program_options
-    Boost::log
-    Boost::log_setup
-    Boost::thread
-    Boost::chrono
-    Boost::coroutine
-    Boost::unit_test_framework
-    attitude_static
-  )
-  add_test(${NEW_TEST} tests/${NEW_TEST})
-endmacro()
-
-new_test(test_types)
-
-
