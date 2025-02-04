@@ -7,7 +7,7 @@
 
 #include <pybind11/pybind11.h>
 
-#include "../../include/types.h"
+#include "attitude/types.h"
 
 namespace py = pybind11;
 using namespace attitude;

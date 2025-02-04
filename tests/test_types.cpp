@@ -1,5 +1,5 @@
 #define BOOST_TEST_MODULE types_test
-#include "types.h"
+#include "attitude/types.h"
 
 #include "test_common.h"
 

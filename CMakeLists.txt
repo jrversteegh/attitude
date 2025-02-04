@@ -31,12 +31,6 @@ if(BUILD_TESTS)
   find_package(fmt REQUIRED)
 endif()
 
-include_directories(
-  ${Boost_INCLUDE_DIR}
-  ${pybind11_INCLUDE_DIR}
-  ${fmt_INCLUDE_DIR}
-)
-
 execute_process(COMMAND git rev-parse --short HEAD OUTPUT_VARIABLE GITREV)
 set(ATTITUDE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(ATTITUDE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -50,6 +44,13 @@ configure_file(${CONFIG_H_IN} ${CONFIG_H} @ONLY)
 if (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Windows")
 configure_file(${CMAKE_SOURCE_DIR}/cmake/CMakeSettings.json.in ${CMAKE_SOURCE_DIR}/CMakeSettings.json @ONLY)
 endif()
+
+include_directories(
+  ${Boost_INCLUDE_DIR}
+  ${pybind11_INCLUDE_DIR}
+  ${fmt_INCLUDE_DIR}
+  ${ATTITUDE_INCLUDE_DIR}
+)
 
 FILE(GLOB lib_sources src/*.cpp)
 
