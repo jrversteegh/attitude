@@ -130,31 +130,31 @@ std::ostream& operator<<(std::ostream& os, T const& v) {
   return os;
 };
 
-template <IsComponents T> decltype(auto) operator+(T const& c1, T const& c2) {
+template <IsComponents T> constexpr decltype(auto) operator+(T const& c1, T const& c2) {
   T result{c1};
   result += c2;
   return result;
 };
 
-template <IsComponents T> decltype(auto) operator-(T const& c1, T const& c2) {
+template <IsComponents T> constexpr decltype(auto) operator-(T const& c1, T const& c2) {
   T result{c1};
   result -= c2;
   return result;
 };
 
 template <IsComponents T>
-decltype(auto) operator*(T const& c1, Number const n) {
+constexpr decltype(auto) operator*(T const& c1, Number const n) {
   T result{c1};
   result *= n;
   return result;
 };
 
-template <IsComponents T> decltype(auto) operator*(T const& c1, T const& c2) {
+template <IsComponents T> constexpr decltype(auto) operator*(T const& c1, T const& c2) {
   return dot(c1, c2);
 }
 
 template <IsComponents T>
-decltype(auto) operator*(Number const n, T const& c1) {
+constexpr decltype(auto) operator*(Number const n, T const& c1) {
   return c1 * n;
 };
 
@@ -191,7 +191,7 @@ struct Vector3 : public Components<3> {
 
 template <IsSubscriptable T>
   requires HasSize<T, 3>
-inline Vector3 cross(T const& v1, T const& v2) {
+constexpr inline Vector3 cross(T const& v1, T const& v2) {
   return Vector3{v1[1] * v2[2] - v1[2] * v2[1], v1[2] * v2[0] - v1[0] * v2[2],
                  v1[0] * v2[1] - v1[1] * v2[0]};
 }
@@ -243,9 +243,11 @@ struct Quaternion : Components<4> {
     result /= norm();
     return result;
   }
+
+  constexpr Quaternion mul(Quaternion const& other) const; 
 };
 
-inline Quaternion operator*(Quaternion const& q1, Quaternion const& q2) {
+constexpr inline Quaternion operator*(Quaternion const& q1, Quaternion const& q2) {
   return Quaternion(q1[0] * q2[0] - dot(q1.vector(), q2.vector()),
                     q1[0] * q2.vector() + q2[0] * q1.vector() -
                         cross(q1.vector(), q2.vector()));
