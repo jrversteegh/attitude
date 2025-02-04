@@ -4,7 +4,6 @@ cmake_minimum_required(VERSION 3.20.0)
 
 project(attitude)
 
-set (CMAKE_CXX_COMPILER g++-14)
 set (CMAKE_CXX_STANDARD 20)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 set (BUILD_SHARED_LIBS ON)
@@ -28,7 +27,6 @@ if(BUILD_TESTS)
     system date_time filesystem log log_setup unit_test_framework regex coroutine chrono
     program_options
   )
-  find_package(fmt REQUIRED)
 endif()
 
 execute_process(COMMAND git rev-parse --short HEAD OUTPUT_VARIABLE GITREV)
@@ -48,8 +46,10 @@ endif()
 include_directories(
   ${Boost_INCLUDE_DIR}
   ${pybind11_INCLUDE_DIR}
-  ${fmt_INCLUDE_DIR}
   ${ATTITUDE_INCLUDE_DIR}
+)
+add_compile_definitions(
+  FMT_HEADER_ONLY=1
 )
 
 FILE(GLOB lib_sources src/*.cpp)
@@ -92,7 +92,6 @@ if(BUILD_TESTS)
       RUNTIME_OUTPUT_DIRECTORY tests
     )
     target_link_libraries(${NEW_TEST} PRIVATE
-      fmt::fmt
       Boost::system
       Boost::filesystem
       Boost::program_options

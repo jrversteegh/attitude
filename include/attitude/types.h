@@ -4,12 +4,13 @@
 #include <array>
 #include <cmath>
 #include <concepts>
-#include <format>
 #include <initializer_list>
 #include <iostream>
 #include <numeric>
 #include <string>
 #include <type_traits>
+
+#include <fmt/format.h>
 
 #include "utils.h"
 
@@ -130,13 +131,15 @@ std::ostream& operator<<(std::ostream& os, T const& v) {
   return os;
 };
 
-template <IsComponents T> constexpr decltype(auto) operator+(T const& c1, T const& c2) {
+template <IsComponents T>
+constexpr decltype(auto) operator+(T const& c1, T const& c2) {
   T result{c1};
   result += c2;
   return result;
 };
 
-template <IsComponents T> constexpr decltype(auto) operator-(T const& c1, T const& c2) {
+template <IsComponents T>
+constexpr decltype(auto) operator-(T const& c1, T const& c2) {
   T result{c1};
   result -= c2;
   return result;
@@ -149,7 +152,8 @@ constexpr decltype(auto) operator*(T const& c1, Number const n) {
   return result;
 };
 
-template <IsComponents T> constexpr decltype(auto) operator*(T const& c1, T const& c2) {
+template <IsComponents T>
+constexpr decltype(auto) operator*(T const& c1, T const& c2) {
   return dot(c1, c2);
 }
 
@@ -163,7 +167,7 @@ struct Vector3 : public Components<3> {
   using Components<3>::Components;
 
   std::string to_string() const {
-    return std::format("{:f}, {:f}, {:f}", x(), y(), z());
+    return fmt::format("{:f}, {:f}, {:f}", x(), y(), z());
   }
 
   constexpr Number x() const {
@@ -206,7 +210,7 @@ struct Quaternion : Components<4> {
   using Components<4>::Components;
 
   std::string to_string() const {
-    return std::format("{:f}, {:f}, {:f}, {:f}", a(), b(), c(), d());
+    return fmt::format("{:f}, {:f}, {:f}, {:f}", a(), b(), c(), d());
   }
 
   constexpr Number a() const {
@@ -244,10 +248,11 @@ struct Quaternion : Components<4> {
     return result;
   }
 
-  constexpr Quaternion mul(Quaternion const& other) const; 
+  constexpr Quaternion mul(Quaternion const& other) const;
 };
 
-constexpr inline Quaternion operator*(Quaternion const& q1, Quaternion const& q2) {
+constexpr inline Quaternion operator*(Quaternion const& q1,
+                                      Quaternion const& q2) {
   return Quaternion(q1[0] * q2[0] - dot(q1.vector(), q2.vector()),
                     q1[0] * q2.vector() + q2[0] * q1.vector() -
                         cross(q1.vector(), q2.vector()));

@@ -32,7 +32,7 @@ def format(ctx):
     for cmd in (
         "black .",
         "isort .",
-        f"clang-format -i {' '.join(glob.glob('include/*.h'))}",
+        f"clang-format -i {' '.join(glob.glob('include/attitude/*.h'))}",
         f"clang-format -i {' '.join(glob.glob('src/*.cpp'))}",
         "pandoc -s -o README.md README.rst",
     ):
