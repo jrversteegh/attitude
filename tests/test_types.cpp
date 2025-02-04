@@ -31,6 +31,8 @@ BOOST_AUTO_TEST_CASE(quaternion_mul_test) {
   auto result = q1 * q2;
   auto expected = Quaternion{-21.f, -2.f, 7.f, 16.f};
   BOOST_TEST(result == expected);
+  auto result2 = q1.mul(q2);
+  BOOST_TEST(result2 == expected);
 }
 
 BOOST_AUTO_TEST_SUITE_END();

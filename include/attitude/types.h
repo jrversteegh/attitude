@@ -259,7 +259,7 @@ struct Quaternion : Components<4> {
     return result;
   }
 
-  constexpr Quaternion mul(Quaternion const& other) const;
+  Quaternion mul(Quaternion const& other) const;
 };
 
 constexpr inline Quaternion operator*(Quaternion const& q1,
