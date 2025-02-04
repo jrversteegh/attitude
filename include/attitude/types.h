@@ -31,6 +31,7 @@ template <std::size_t N> struct Components {
             typename = std::enable_if_t<(sizeof...(Args) == N)>>
   constexpr Components(Args&&... args) : c_{std::forward<Args>(args)...} {}
   constexpr Components(Components const& cs) : c_{cs.c_} {}
+  constexpr Components() : c_{} {}
 
   constexpr bool equals(Components<N> const& other) const {
     return this->c_ == other.c_;
