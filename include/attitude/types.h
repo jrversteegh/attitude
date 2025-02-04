@@ -6,6 +6,7 @@
 #include <concepts>
 #include <initializer_list>
 #include <iostream>
+#include <limits>
 #include <numeric>
 #include <string>
 #include <type_traits>
@@ -39,14 +40,23 @@ template <std::size_t N> struct Components {
 
   constexpr Number operator[](std::size_t const i) const {
     if (i >= N) {
+#ifdef __cpp_exceptions
       throw std::out_of_range("Component index out of range");
+#else
+      return std::numeric_limits<Number>::max();
+#endif
     }
     return c_[i];
   }
 
   Number& operator[](std::size_t const i) {
     if (i >= N) {
+#ifdef __cpp_exceptions
       throw std::out_of_range("Component index out of range");
+#else
+      static Number out_of_range = std::numeric_limits<Number>::max();
+      return out_of_range;
+#endif
     }
     return c_[i];
   }
