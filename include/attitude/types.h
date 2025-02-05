@@ -269,6 +269,41 @@ constexpr inline Quaternion operator*(Quaternion const& q1,
                         cross(q1.vector(), q2.vector()));
 }
 
+/**
+ * Heading/Pitch/Roll
+ *
+ * Tait bryan angle representation of orientation or rotation.
+ * One of the possible combination of "Euler Angles" commonly used
+ * in shipping and aeronautics. The full rotation is achieved by
+ * consecutavely rotating around the Z, Y, and X axes of a body,
+ * in that order. Note that the axes rotate along with the body.
+ */
+struct HeadingPitchRoll : Components<3> {
+  using Components<3>::Components;
+};
+
+/**
+ * Rotation Vector
+ *
+ * Attitude or rotation representation by means of a 3D vector
+ * that points in the direction of the rotation axis and has
+ * a length that matches the angle of rotation. This is somewhat
+ * similar to a Quaternion representation, but with the contrained
+ * that the quaternion should be a unit quaternion removed.
+ */
+struct RotationVector : Vector3 {
+  using Vector3::Vector3;
+};
+
+/**
+ * Rotation Matrix
+ *
+ * Matrix representation of orientation or rotation.
+ */
+struct RotationMatrix : Components<9> {
+  using Components<9>::Components;
+};
+
 } // namespace attitude
 
 #endif
