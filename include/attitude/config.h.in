@@ -10,3 +10,5 @@
 /*
 Condition includes and definitions of optional packages here
 */
+
+using Number = float;

@@ -1,8 +1,8 @@
 /build
 /dist
 /.coverage
-/src/version.h
-/src/config.h
+/include/attitude/version.h
+/include/attitude/config.h
 /src/revision.txt
 /setup.py
 /CMakeSettings.json

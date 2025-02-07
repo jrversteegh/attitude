@@ -5,6 +5,8 @@
 #include <limits>
 #include <stdexcept>
 
+#include "config.h"
+
 namespace attitude {
 
 template <typename S> struct SliceIterator {

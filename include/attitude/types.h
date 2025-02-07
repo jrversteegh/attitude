@@ -13,11 +13,10 @@
 
 #include <fmt/format.h>
 
+#include "config.h"
 #include "utils.h"
 
 namespace attitude {
-
-using Number = float;
 
 template <typename T, std::size_t I = 0>
 constexpr Number dot(T const& v1, T const& v2) {
