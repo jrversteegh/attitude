@@ -19,8 +19,13 @@ namespace attitude {
 
 using Number = float;
 
-template <typename T> constexpr Number dot(T const& v1, T const& v2) {
-  return std::inner_product(v1.cbegin(), v1.cend(), v2.cbegin(), 0);
+template <typename T, std::size_t I = 0>
+constexpr Number dot(T const& v1, T const& v2) {
+  if constexpr (I < T::size) {
+    return v1[I] * v2[I] + dot<T, I + 1>(v1, v2);
+  } else {
+    return 0;
+  }
 }
 
 template <std::size_t N> struct Components {
@@ -102,9 +107,13 @@ template <std::size_t N> struct Components {
     return c_.cend();
   }
 
-  constexpr auto slice(std::size_t const from, std::size_t const to = size,
-                       std::size_t const step = 1) const {
-    return Slice(*this, from, to, step);
+  template <std::size_t FROM, std::size_t TO = size, std::size_t STRIDE = 1>
+  constexpr auto slice() const {
+    return attitude::slice<FROM, TO, STRIDE>(*this);
+  }
+
+  constexpr auto count() const {
+    return size;
   }
 
 private:
@@ -118,6 +127,9 @@ concept HasEquals = requires(T t, T const& v) {
 
 template <typename T>
 concept IsComponents = requires { T::is_components; };
+
+template <typename T>
+concept IsSlice = requires { T::is_slice; };
 
 template <class T, class I = std::size_t>
 concept IsSubscriptable = requires(T& t, I const& i) {
@@ -206,14 +218,14 @@ struct Vector3 : public Components<3> {
 
 template <IsSubscriptable T>
   requires HasSize<T, 3>
-constexpr inline Vector3 cross(T const& v1, T const& v2) {
+constexpr Vector3 cross(T const& v1, T const& v2) {
   return Vector3{v1[1] * v2[2] - v1[2] * v2[1], v1[2] * v2[0] - v1[0] * v2[2],
                  v1[0] * v2[1] - v1[1] * v2[0]};
 }
 
 struct Quaternion : Components<4> {
   constexpr Quaternion(Quaternion const& q)
-      : Components<4>{q.a(), q.b(), q.c(), q.d()} {}
+      : Components<4>{q.r(), q.i(), q.j(), q.k()} {}
   constexpr Quaternion(Number real, Vector3 const& v)
       : Components<4>{real, v.x(), v.y(), v.z()} {}
   constexpr Quaternion(Vector3 const& v)
@@ -221,24 +233,24 @@ struct Quaternion : Components<4> {
   using Components<4>::Components;
 
   std::string to_string() const {
-    return fmt::format("{:f}, {:f}, {:f}, {:f}", a(), b(), c(), d());
+    return fmt::format("{:f}, {:f}, {:f}, {:f}", r(), i(), j(), k());
   }
 
-  constexpr Number a() const {
+  constexpr Number r() const {
     return this->operator[](0);
   }
-  constexpr Number b() const {
+  constexpr Number i() const {
     return this->operator[](1);
   }
-  constexpr Number c() const {
+  constexpr Number j() const {
     return this->operator[](2);
   }
-  constexpr Number d() const {
+  constexpr Number k() const {
     return this->operator[](3);
   }
 
   constexpr Quaternion adjoint() const {
-    return Quaternion(a(), -b(), -c(), -d());
+    return Quaternion(r(), -i(), -j(), -k());
   }
 
   constexpr Number norm() const {
@@ -246,7 +258,7 @@ struct Quaternion : Components<4> {
   }
 
   constexpr Vector3 vector() const {
-    return Vector3(b(), c(), d());
+    return Vector3(i(), j(), k());
   }
 
   constexpr operator Vector3() const {
@@ -259,14 +271,20 @@ struct Quaternion : Components<4> {
     return result;
   }
 
-  Quaternion mul(Quaternion const& other) const;
+  constexpr Quaternion mul(Quaternion const& other) const {
+    return Quaternion(this->r() * other.r() -
+                          dot(this->slice<1>(), other.slice<1>()),
+                      this->r() * other.vector() + other.r() * this->vector() -
+                          cross(this->slice<1>(), other.slice<1>()));
+  }
 };
 
-constexpr inline Quaternion operator*(Quaternion const& q1,
-                                      Quaternion const& q2) {
-  return Quaternion(q1[0] * q2[0] - dot(q1.vector(), q2.vector()),
-                    q1[0] * q2.vector() + q2[0] * q1.vector() -
-                        cross(q1.vector(), q2.vector()));
+constexpr Quaternion operator*(Quaternion const& q1, Quaternion const& q2) {
+  return Quaternion(
+      q1[0] * q2[0] - q1[1] * q2[1] - q1[2] * q2[2] - q1[3] * q2[3],
+      q1[0] * q2[1] + q1[1] * q2[0] + q1[3] * q2[2] - q1[2] * q2[3],
+      q1[0] * q2[2] + q1[2] * q2[0] + q1[1] * q2[3] - q1[3] * q2[1],
+      q1[0] * q2[3] + q1[3] * q2[0] + q1[2] * q2[1] - q1[1] * q2[2]);
 }
 
 /**

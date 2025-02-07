@@ -1,8 +1,9 @@
 #ifndef ATTITUDE_UTILS_H__
 #define ATTITUDE_UTILS_H__
 
-#include <algorithm>
 #include <cstddef>
+#include <limits>
+#include <stdexcept>
 
 namespace attitude {
 
@@ -34,26 +35,37 @@ private:
   std::size_t index_;
 };
 
-template <typename T> struct Slice {
+template <typename T, std::size_t B, std::size_t E = T::size, std::size_t S = 1>
+struct Slice {
+  static constexpr bool const is_slice = true;
   using value_type = T::value_type;
+  static constexpr std::size_t const start = B;
+  static constexpr std::size_t const stop = E;
+  static constexpr std::size_t const size = (E - B - 1) / S + 1;
+  static constexpr std::size_t const stride = S;
 
-  constexpr Slice(T& array, std::size_t const begin,
-                  std::size_t const end = T::size, std::size_t const stride = 1)
-      : array_(array), begin_(begin), end_(std::max(end, T::size)),
-        stride_(stride), size_((end_ - begin_ - 1) / stride_ + 1) {}
+  constexpr Slice(T& array) : array_(array) {}
 
   constexpr value_type operator[](std::size_t const index) const {
-    std::size_t const offset = begin_ + index * stride_;
-    if (offset >= end_) {
+    std::size_t const offset = start + index * stride;
+    if (offset >= stop) {
+#ifdef __cpp_exceptions
       throw std::out_of_range("Slice index out of range");
+#else
+      return std::numeric_limits<Number>::max();
+#endif
     }
     return array_[offset];
   }
 
   constexpr value_type& operator[](std::size_t const index) {
-    std::size_t const offset = begin_ + index * stride_;
-    if (offset >= end_) {
+    std::size_t const offset = start + index * stride;
+    if (offset >= stop) {
+#ifdef __cpp_exceptions
       throw std::out_of_range("Slice index out of range");
+#else
+      return std::numeric_limits<Number>::max();
+#endif
     }
     return array_[offset];
   }
@@ -63,7 +75,7 @@ template <typename T> struct Slice {
   }
 
   constexpr auto end() {
-    return SliceIterator(*this, size_);
+    return SliceIterator(*this, size);
   }
 
   constexpr auto cbegin() const {
@@ -71,16 +83,17 @@ template <typename T> struct Slice {
   }
 
   constexpr auto cend() const {
-    return SliceIterator(const_cast<Slice const&>(*this), size_);
+    return SliceIterator(const_cast<Slice const&>(*this), size);
   }
 
 private:
   T& array_;
-  std::size_t const begin_;
-  std::size_t const end_;
-  std::size_t const stride_;
-  std::size_t const size_;
 };
+
+template <std::size_t B, std::size_t E, std::size_t S, typename T>
+constexpr auto slice(T& array) -> Slice<T, B, E, S> {
+  return Slice<T, B, E, S>(array);
+}
 
 } // namespace attitude
 

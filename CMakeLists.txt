@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.20.0)
 
 project(attitude)
 
+set (CMAKE_CXX_COMPILER g++-14)
 set (CMAKE_CXX_STANDARD 20)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 set (BUILD_SHARED_LIBS ON)
@@ -24,9 +25,10 @@ if(BUILD_PYTHON)
 endif()
 if(BUILD_TESTS)
   find_package(Boost 1.80.0 REQUIRED
-    system date_time filesystem log log_setup unit_test_framework regex coroutine chrono
+    system date_time filesystem log log_setup unit_test_framework regex
     program_options
   )
+  find_package(benchmark REQUIRED)
 endif()
 
 execute_process(COMMAND git rev-parse --short HEAD OUTPUT_VARIABLE GITREV)
@@ -97,14 +99,40 @@ if(BUILD_TESTS)
       Boost::program_options
       Boost::log
       Boost::log_setup
-      Boost::thread
-      Boost::chrono
-      Boost::coroutine
       Boost::unit_test_framework
       attitude_static
     )
     add_test(${NEW_TEST} tests/${NEW_TEST})
   endmacro()
 
+  macro(new_benchmark NEW_BENCHMARK)
+    set(BENCHMARK_SOURCES ${ARGN})
+    list(TRANSFORM BENCHMARK_SOURCES PREPEND ${ATTITUDE_SOURCE_DIR}/ )
+    add_executable(${NEW_BENCHMARK}
+      ${TEST_DIR}/${NEW_BENCHMARK}.cpp
+      ${BENCHMARK_SOURCES}
+    )
+    target_include_directories(${NEW_BENCHMARK} PRIVATE
+      ${ATTITUDE_INCLUDE_DIR}
+      ${ATTITUDE_SOURCE_DIR}
+    )
+    set_target_properties(${NEW_BENCHMARK} PROPERTIES
+      ${BENCHMARK_LINK_FLAGS}
+      RUNTIME_OUTPUT_DIRECTORY benchmarks
+    )
+    target_link_libraries(${NEW_BENCHMARK} PRIVATE
+      benchmark::benchmark_main
+      Boost::system
+      Boost::filesystem
+      Boost::program_options
+      Boost::log
+      Boost::log_setup
+      Boost::unit_test_framework
+      attitude_static
+    )
+    add_test(${NEW_BENCHMARK} benchmarks/${NEW_BENCHMARK})
+  endmacro()
+
   new_test(test_types)
+  new_benchmark(test_performance)
 endif()
