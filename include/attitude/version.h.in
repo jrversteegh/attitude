@@ -5,10 +5,10 @@
  * \author J.R. Versteegh <j.r.versteegh@gmail.com>
  */
 
-#define GITREV @GITREV @
-#define VERSION @VERSION @
-#define BUILD_DATE @DATE @
-#define BUILD_TYPE @CMAKE_BUILD_TYPE @
+#define GITREV @GITREV@
+#define VERSION @VERSION@
+#define BUILD_DATE @DATE@
+#define BUILD_TYPE @CMAKE_BUILD_TYPE@
 
 #cmakedefine CXX_VER "@CXX_VERSION@"
 
