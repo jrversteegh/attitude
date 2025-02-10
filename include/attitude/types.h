@@ -18,10 +18,10 @@
 
 namespace attitude {
 
-template <typename T, std::size_t I = 0>
-constexpr Number dot(T const& v1, T const& v2) {
+template <typename T, typename S, std::size_t I = 0>
+constexpr Number dot(T const& v1, S const& v2) {
   if constexpr (I < T::size) {
-    return v1[I] * v2[I] + dot<T, I + 1>(v1, v2);
+    return v1[I] * v2[I] + dot<T, S, I + 1>(v1, v2);
   } else {
     return 0;
   }
@@ -320,6 +320,29 @@ struct RotationVector : Vector3 {
 struct RotationMatrix : Components<9> {
   using Components<9>::Components;
 };
+
+constexpr RotationMatrix operator*(RotationMatrix const& m1,
+                                   RotationMatrix const& m2) {
+  return RotationMatrix{
+      dot(m1.slice<0, 3>(), m2.slice<0, 9, 3>()),
+      dot(m1.slice<0, 3>(), m2.slice<1, 9, 3>()),
+      dot(m1.slice<0, 3>(), m2.slice<2, 9, 3>()),
+      dot(m1.slice<3, 6>(), m2.slice<0, 9, 3>()),
+      dot(m1.slice<3, 6>(), m2.slice<1, 9, 3>()),
+      dot(m1.slice<3, 6>(), m2.slice<2, 9, 3>()),
+      dot(m1.slice<6, 9>(), m2.slice<0, 9, 3>()),
+      dot(m1.slice<6, 9>(), m2.slice<1, 9, 3>()),
+      dot(m1.slice<6, 9>(), m2.slice<2, 9, 3>()),
+  };
+}
+
+constexpr Vector3 operator*(RotationMatrix const& m, Vector3 const& v) {
+  return Vector3{
+      dot(m.slice<0, 3>(), v),
+      dot(m.slice<3, 6>(), v),
+      dot(m.slice<6, 9>(), v),
+  };
+}
 
 } // namespace attitude
 
