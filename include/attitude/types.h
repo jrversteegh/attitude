@@ -135,6 +135,9 @@ concept IsComponents = requires { T::is_components; };
 template <typename T>
 concept IsSlice = requires { T::is_slice; };
 
+template <typename T>
+concept IsMatrix = requires { T::is_matrix; };
+
 template <class T, class I = std::size_t>
 concept IsSubscriptable = requires(T& t, I const& i) {
   { t[i] };
@@ -180,11 +183,6 @@ constexpr decltype(auto) operator*(T const& c1, Number const n) {
 };
 
 template <IsComponents T>
-constexpr decltype(auto) operator*(T const& c1, T const& c2) {
-  return dot(c1, c2);
-}
-
-template <IsComponents T>
 constexpr decltype(auto) operator*(Number const n, T const& c1) {
   return c1 * n;
 };
@@ -219,6 +217,10 @@ struct Vector3 : public Components<3> {
     return *this;
   }
 };
+
+constexpr Number operator*(Vector3 const& v1, Vector3 const& v2) {
+  return dot(v1, v2);
+}
 
 template <IsSubscriptable T>
   requires HasSize<T, 3>
@@ -317,41 +319,86 @@ struct RotationVector : Vector3 {
   using Vector3::Vector3;
 };
 
+template <typename M> std::string matrix_to_string(M const& m) {
+  return fmt::format("{:f}, {:f}, {:f}\n{:f}, {:f}, {:f}\n{:f}, {:f}, {:f}",
+                     m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8]);
+}
+
+/**
+ * 3x3 Matrix
+ */
+struct Matrix3 : Components<9> {
+  using Components<9>::Components;
+  constexpr static bool const is_matrix = true;
+  std::string to_string() const {
+    return matrix_to_string(*this);
+  }
+};
+
 /**
  * Rotation Matrix
  *
  * Matrix representation of orientation or rotation.
  */
-struct RotationMatrix : Components<9> {
-  using Components<9>::Components;
+struct RotationMatrix : Components<6> {
+  using Components<6>::Components;
+  constexpr static bool const is_matrix = true;
+  constexpr static size_t const size = 9;
   std::string to_string() const {
-    return fmt::format("{:f}, {:f}, {:f}\n{:f}, {:f}, {:f}\n{:f}, {:f}, {:f}",
-                       get<0>(), get<1>(), get<2>(), get<3>(), get<4>(),
-                       get<5>(), get<6>(), get<7>(), get<8>());
+    return matrix_to_string(*this);
+  }
+
+  template <std::size_t I> static constexpr size_t adapt_index() {
+    return I < 3 ? I : (I < 6 ? (I == 3 ? 1 : I - 1) : (I == 6 ? 2 : I - 3));
+  }
+
+  static constexpr size_t adapt_index(std::size_t const i) {
+    return i < 3 ? i : (i < 6 ? (i == 3 ? 1 : i - 1) : (i == 6 ? 2 : i - 3));
+  }
+
+  constexpr Number operator[](std::size_t const i) const {
+    return Components::operator[](adapt_index(i));
+  }
+
+  Number& operator[](std::size_t const i) {
+    return Components::operator[](adapt_index(i));
+  }
+
+  template <std::size_t I> constexpr Number get() const {
+    return Components::get<adapt_index<I>()>();
   }
 };
 
-constexpr RotationMatrix operator*(RotationMatrix const& m1,
-                                   RotationMatrix const& m2) {
-  return RotationMatrix{
-      dot(m1.slice<0, 3>(), m2.slice<0, 9, 3>()),
-      dot(m1.slice<0, 3>(), m2.slice<1, 9, 3>()),
-      dot(m1.slice<0, 3>(), m2.slice<2, 9, 3>()),
-      dot(m1.slice<3, 6>(), m2.slice<0, 9, 3>()),
-      dot(m1.slice<3, 6>(), m2.slice<1, 9, 3>()),
-      dot(m1.slice<3, 6>(), m2.slice<2, 9, 3>()),
-      dot(m1.slice<6, 9>(), m2.slice<0, 9, 3>()),
-      dot(m1.slice<6, 9>(), m2.slice<1, 9, 3>()),
-      dot(m1.slice<6, 9>(), m2.slice<2, 9, 3>()),
-  };
+template <IsMatrix M, IsMatrix N>
+constexpr auto operator*(M const& m1, N const& m2) {
+  auto r1 = slice<0, 3, 1>(m1);
+  auto r2 = slice<3, 6, 1>(m1);
+  auto r3 = slice<6, 9, 1>(m1);
+  auto c1 = slice<0, 9, 3>(m2);
+  auto c2 = slice<1, 9, 3>(m2);
+  auto c3 = slice<2, 9, 3>(m2);
+  return Matrix3{dot(r1, c1), dot(r1, c2), dot(r1, c3),
+                 dot(r2, c1), dot(r2, c2), dot(r2, c3),
+                 dot(r3, c1), dot(r3, c2), dot(r3, c3)};
 }
 
-constexpr Vector3 operator*(RotationMatrix const& m, Vector3 const& v) {
-  return Vector3{
-      dot(m.slice<0, 3>(), v),
-      dot(m.slice<3, 6>(), v),
-      dot(m.slice<6, 9>(), v),
-  };
+template <>
+constexpr auto operator*
+    <RotationMatrix, RotationMatrix>(RotationMatrix const& m1,
+                                     RotationMatrix const& m2) {
+  auto r1 = slice<0, 3, 1>(m1);
+  auto r2 = slice<3, 6, 1>(m1);
+  auto r3 = slice<6, 9, 1>(m1);
+  auto c1 = slice<0, 9, 3>(m2);
+  auto c2 = slice<1, 9, 3>(m2);
+  auto c3 = slice<2, 9, 3>(m2);
+  return RotationMatrix{dot(r1, c1), dot(r1, c2), dot(r1, c3),
+                        dot(r2, c2), dot(r2, c3), dot(r3, c3)};
+}
+
+template <IsMatrix M> constexpr auto operator*(M const& m, Vector3 const& v) {
+  return Vector3{dot(slice<0, 3, 1>(m), v), dot(slice<3, 6, 1>(m), v),
+                 dot(slice<6, 9, 1>(m), v)};
 }
 
 } // namespace attitude

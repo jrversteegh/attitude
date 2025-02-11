@@ -33,15 +33,25 @@ BOOST_AUTO_TEST_CASE(quaternion_mul_test) {
   BOOST_TEST(result2 == expected);
 }
 
-BOOST_AUTO_TEST_CASE(rotation_matrix_mul_test) {
-  RotationMatrix m{1.f, 2.f, 3.f, 2.f, 4.f, 6.f, 3.f, 6.f, 9.f};
+BOOST_AUTO_TEST_CASE(matrix_mul_test) {
+  Matrix3 m{1.f, 2.f, 3.f, 2.f, 4.f, 6.f, 3.f, 6.f, 9.f};
   Vector3 v{1.f, 2.f, 3.f};
   auto result1 = m * v;
   auto expected1 = Vector3{14.f, 28.f, 42.f};
   BOOST_TEST(result1 == expected1);
+  Matrix3 result2 = m * m;
+  Matrix3 expected2{14.f, 28.f, 42.f, 28.f, 56.f, 84.f, 42.f, 84.f, 126.f};
+  BOOST_TEST(result2 == expected2);
+}
+
+BOOST_AUTO_TEST_CASE(rotation_matrix_mul_test) {
+  RotationMatrix m{1.f, 2.f, 3.f, 2.f, 4.f, 6.f};
+  Vector3 v{1.f, 2.f, 3.f};
+  auto result1 = m * v;
+  auto expected1 = Vector3{14.f, 18.f, 29.f};
+  BOOST_TEST(result1 == expected1);
   auto result2 = m * m;
-  auto expected2 =
-      RotationMatrix{14.f, 28.f, 42.f, 28.f, 56.f, 84.f, 42.f, 84.f, 126.f};
+  auto expected2 = RotationMatrix{14.f, 18.f, 29.f, 24.f, 38.f, 61.f};
   BOOST_TEST(result2 == expected2);
 }
 
