@@ -16,7 +16,7 @@ Quaternion get_random_quaternion() {
 static void benchmark_method_mul(benchmark::State& state) {
   Quaternion q1 = get_random_quaternion();
   Quaternion q2 = get_random_quaternion();
-  for (auto _: state) {
+  for (auto _ : state) {
     auto value = q1.mul(q2);
     benchmark::DoNotOptimize(value);
   }
@@ -25,7 +25,7 @@ static void benchmark_method_mul(benchmark::State& state) {
 static void benchmark_operator_mul(benchmark::State& state) {
   Quaternion q1 = get_random_quaternion();
   Quaternion q2 = get_random_quaternion();
-  for (auto _: state) {
+  for (auto _ : state) {
     auto value = q1 * q2;
     benchmark::DoNotOptimize(value);
   }

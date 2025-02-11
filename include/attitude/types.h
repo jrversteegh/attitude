@@ -65,6 +65,11 @@ template <std::size_t N> struct Components {
     return c_[i];
   }
 
+  template <std::size_t I> constexpr Number get() const {
+    static_assert(I < N);
+    return c_[I];
+  }
+
   template <int I = 0>
   constexpr Components<N>& operator+=(Components<N> const& v) {
     if constexpr (I < N) {
@@ -319,6 +324,11 @@ struct RotationVector : Vector3 {
  */
 struct RotationMatrix : Components<9> {
   using Components<9>::Components;
+  std::string to_string() const {
+    return fmt::format("{:f}, {:f}, {:f}\n{:f}, {:f}, {:f}\n{:f}, {:f}, {:f}",
+                       get<0>(), get<1>(), get<2>(), get<3>(), get<4>(),
+                       get<5>(), get<6>(), get<7>(), get<8>());
+  }
 };
 
 constexpr RotationMatrix operator*(RotationMatrix const& m1,
