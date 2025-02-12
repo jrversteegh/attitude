@@ -23,6 +23,19 @@ BOOST_AUTO_TEST_CASE(vector_add_test) {
   BOOST_TEST(result == expected);
 }
 
+BOOST_AUTO_TEST_CASE(vector_component_test) {
+  Vector3 v1{1.f, 2.f, 3.f};
+  auto c2 = v1[1];
+  BOOST_TEST(c2 == 2.f);
+  c2 = 3.f;
+  BOOST_TEST(c2 == 3.f);
+  c2 = v1[1];
+  BOOST_TEST(c2 == 2.f);
+  v1[1] = 3.f;
+  c2 = v1[1];
+  BOOST_TEST(c2 == 3.f);
+}
+
 BOOST_AUTO_TEST_CASE(quaternion_mul_test) {
   Quaternion q1{1.f, 2.f, 3.f, 4.f};
   Quaternion q2{2.f, 2.f, 1.f, 4.f};
