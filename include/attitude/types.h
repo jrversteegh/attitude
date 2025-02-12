@@ -196,25 +196,13 @@ struct Vector3 : public Components<3> {
   }
 
   constexpr Number x() const {
-    return this->operator[](0);
+    return this->get<0>();
   }
   constexpr Number y() const {
-    return this->operator[](1);
+    return this->get<1>();
   }
   constexpr Number z() const {
-    return this->operator[](2);
-  }
-  Vector3& set_x(Number const value) {
-    this->operator[](0) = value;
-    return *this;
-  }
-  Vector3& set_y(Number const value) {
-    this->operator[](1) = value;
-    return *this;
-  }
-  Vector3& set_z(Number const value) {
-    this->operator[](2) = value;
-    return *this;
+    return this->get<2>();
   }
 };
 
@@ -234,7 +222,7 @@ struct Quaternion : Components<4> {
       : Components<4>{q.r(), q.i(), q.j(), q.k()} {}
   constexpr Quaternion(Number real, Vector3 const& v)
       : Components<4>{real, v.x(), v.y(), v.z()} {}
-  constexpr Quaternion(Vector3 const& v)
+  explicit constexpr Quaternion(Vector3 const& v)
       : Components<4>{0.f, v.x(), v.y(), v.z()} {}
   using Components<4>::Components;
 
@@ -243,16 +231,16 @@ struct Quaternion : Components<4> {
   }
 
   constexpr Number r() const {
-    return this->operator[](0);
+    return this->get<0>();
   }
   constexpr Number i() const {
-    return this->operator[](1);
+    return this->get<1>();
   }
   constexpr Number j() const {
-    return this->operator[](2);
+    return this->get<2>();
   }
   constexpr Number k() const {
-    return this->operator[](3);
+    return this->get<3>();
   }
 
   constexpr Quaternion adjoint() const {
@@ -267,7 +255,7 @@ struct Quaternion : Components<4> {
     return Vector3(i(), j(), k());
   }
 
-  constexpr operator Vector3() const {
+  explicit constexpr operator Vector3() const {
     return vector();
   }
 
@@ -277,6 +265,7 @@ struct Quaternion : Components<4> {
     return result;
   }
 
+  // Present for benchmark comparison to operator*
   constexpr Quaternion mul(Quaternion const& other) const {
     return Quaternion(this->r() * other.r() -
                           dot(this->slice<1>(), other.slice<1>()),
@@ -292,6 +281,26 @@ constexpr Quaternion operator*(Quaternion const& q1, Quaternion const& q2) {
       q1[0] * q2[2] + q1[2] * q2[0] + q1[1] * q2[3] - q1[3] * q2[1],
       q1[0] * q2[3] + q1[3] * q2[0] + q1[2] * q2[1] - q1[1] * q2[2]);
 }
+
+struct UnitQuaternion : private Quaternion {
+  constexpr UnitQuaternion(Number const r, Number const i, Number const j,
+                           Number const k)
+      : Quaternion{r, i, j, k} {}
+  constexpr UnitQuaternion(UnitQuaternion const& q)
+      : Quaternion{q.r(), q.i(), q.j(), q.k()} {}
+  using Quaternion::i;
+  using Quaternion::j;
+  using Quaternion::k;
+  using Quaternion::r;
+  using Quaternion::size;
+  using Quaternion::to_string;
+  constexpr Number operator[](std::size_t const i) const {
+    return Quaternion::operator[](i);
+  }
+  constexpr UnitQuaternion inverse() const {
+    return UnitQuaternion(r(), -i(), -j(), -k());
+  }
+};
 
 /**
  * Heading/Pitch/Roll
@@ -342,6 +351,13 @@ struct Matrix3 : Components<9> {
  */
 struct RotationMatrix : Components<6> {
   using Components<6>::Components;
+  explicit constexpr RotationMatrix(UnitQuaternion const& q)
+      : Components{sqr(q[0]) + sqr(q[1]) - sqr(q[2]) - sqr(q[3]),
+                   2 * (q[1] * q[2] + q[0] * q[3]),
+                   2 * (q[1] * q[3] - q[0] * q[2]),
+                   sqr(q[0]) - sqr(q[1]) + sqr(q[2]) - sqr(q[3]),
+                   2 * (q[2] * q[3] + q[0] * q[1]),
+                   sqr(q[0]) - sqr(q[1]) - sqr(q[2]) + sqr(q[3])} {}
   constexpr static bool const is_matrix = true;
   constexpr static size_t const size = 9;
   std::string to_string() const {

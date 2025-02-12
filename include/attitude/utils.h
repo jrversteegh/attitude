@@ -9,6 +9,10 @@
 
 namespace attitude {
 
+template <typename T> constexpr T sqr(T const& v) {
+  return v * v;
+}
+
 template <typename S> struct SliceIterator {
   using value_type = typename S::value_type;
 
