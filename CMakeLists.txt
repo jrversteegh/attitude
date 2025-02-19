@@ -135,5 +135,6 @@ if(BUILD_TESTS)
   endmacro()
 
   new_test(test_types)
+  new_test(test_quaternion)
   new_benchmark(test_performance)
 endif()

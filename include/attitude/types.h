@@ -42,6 +42,15 @@ template <std::size_t N> struct Components {
     return this->c_ == other.c_;
   }
 
+  template <int I = 0> constexpr Components<N>& negate() {
+    if constexpr (I < N) {
+      c_[I] = -c_[I];
+      return this->negate<I + 1>();
+    } else {
+      return *this;
+    }
+  }
+
   constexpr Number operator[](std::size_t const i) const {
     if (i >= N) {
 #ifdef __cpp_exceptions
@@ -130,6 +139,9 @@ concept HasEquals = requires(T t, T const& v) {
 };
 
 template <typename T>
+concept HasNegate = requires(T t) { t.negate(); };
+
+template <typename T>
 concept IsComponents = requires { T::is_components; };
 
 template <typename T>
@@ -149,6 +161,12 @@ concept HasSize = requires { T::size == S; };
 template <typename T>
 concept HasToString = requires(T t) {
   { t.to_string() } -> std::convertible_to<std::string>;
+};
+
+template <HasNegate T> inline T operator-(T const& v) {
+  T result{v};
+  result.negate();
+  return result;
 };
 
 template <HasEquals T> inline bool operator==(T const& v1, T const& v2) {
@@ -264,14 +282,6 @@ struct Quaternion : Components<4> {
     result /= norm();
     return result;
   }
-
-  // Present for benchmark comparison to operator*
-  constexpr Quaternion mul(Quaternion const& other) const {
-    return Quaternion(this->r() * other.r() -
-                          dot(this->slice<1>(), other.slice<1>()),
-                      this->r() * other.vector() + other.r() * this->vector() -
-                          cross(this->slice<1>(), other.slice<1>()));
-  }
 };
 
 constexpr Quaternion operator*(Quaternion const& q1, Quaternion const& q2) {
@@ -282,18 +292,21 @@ constexpr Quaternion operator*(Quaternion const& q1, Quaternion const& q2) {
       q1[0] * q2[3] + q1[3] * q2[0] + q1[2] * q2[1] - q1[1] * q2[2]);
 }
 
-struct UnitQuaternion : private Quaternion {
+struct UnitQuaternion : protected Quaternion {
   constexpr UnitQuaternion(Number const r, Number const i, Number const j,
                            Number const k)
       : Quaternion{r, i, j, k} {}
-  constexpr UnitQuaternion(UnitQuaternion const& q)
-      : Quaternion{q.r(), q.i(), q.j(), q.k()} {}
+  constexpr UnitQuaternion(UnitQuaternion const& q) : Quaternion{q} {}
+  using Quaternion::Components;
+  using Quaternion::equals;
   using Quaternion::i;
   using Quaternion::j;
   using Quaternion::k;
+  using Quaternion::negate;
   using Quaternion::r;
   using Quaternion::size;
   using Quaternion::to_string;
+  using Quaternion::value_type;
   constexpr Number operator[](std::size_t const i) const {
     return Quaternion::operator[](i);
   }
@@ -342,6 +355,9 @@ struct Matrix3 : Components<9> {
   std::string to_string() const {
     return matrix_to_string(*this);
   }
+  constexpr Vector3 diag() const {
+    return Vector3{get<0>(), get<4>(), get<8>()};
+  }
 };
 
 /**
@@ -349,15 +365,8 @@ struct Matrix3 : Components<9> {
  *
  * Matrix representation of orientation or rotation.
  */
-struct RotationMatrix : Components<6> {
+struct Tensor : Components<6> {
   using Components<6>::Components;
-  explicit constexpr RotationMatrix(UnitQuaternion const& q)
-      : Components{sqr(q[0]) + sqr(q[1]) - sqr(q[2]) - sqr(q[3]),
-                   2 * (q[1] * q[2] + q[0] * q[3]),
-                   2 * (q[1] * q[3] - q[0] * q[2]),
-                   sqr(q[0]) - sqr(q[1]) + sqr(q[2]) - sqr(q[3]),
-                   2 * (q[2] * q[3] + q[0] * q[1]),
-                   sqr(q[0]) - sqr(q[1]) - sqr(q[2]) + sqr(q[3])} {}
   constexpr static bool const is_matrix = true;
   constexpr static size_t const size = 9;
   std::string to_string() const {
@@ -385,36 +394,89 @@ struct RotationMatrix : Components<6> {
   }
 };
 
+struct RotationMatrix : private Matrix3 {
+  explicit constexpr RotationMatrix(UnitQuaternion const& q)
+      : Matrix3{sqr(q[0]) + sqr(q[1]) - sqr(q[2]) - sqr(q[3]),
+                2 * (q[1] * q[2] + q[0] * q[3]),
+                2 * (q[1] * q[3] - q[0] * q[2]),
+                2 * (q[1] * q[2] - q[0] * q[3]),
+                sqr(q[0]) - sqr(q[1]) + sqr(q[2]) - sqr(q[3]),
+                2 * (q[2] * q[3] + q[0] * q[1]),
+                2 * (q[1] * q[3] + q[0] * q[2]),
+                2 * (q[2] * q[3] - q[0] * q[1]),
+                sqr(q[0]) - sqr(q[1]) - sqr(q[2]) + sqr(q[3])} {}
+  using Matrix3::diag;
+  using Matrix3::equals;
+  using Matrix3::get;
+  using Matrix3::is_matrix;
+  using Matrix3::size;
+  using Matrix3::value_type;
+  explicit operator UnitQuaternion() const {
+    auto d = diag();
+    if (d[1] > -d[2] && d[0] > -d[1] && d[0] > -d[2]) {
+      value_type f = 2 * std::sqrt(1 + d[0] + d[1] + d[2]);
+      return UnitQuaternion{f / 4, (get<5>() - get<7>()) / f,
+                            (get<6>() - get<2>()) / f,
+                            (get<1>() - get<3>()) / f};
+    } else if (d[1] < -d[2] && d[0] > d[1] && d[0] > d[2]) {
+      value_type f = 2 * std::sqrt(1 + d[0] - d[1] - d[2]);
+      return UnitQuaternion{(get<5>() - get<7>()) / f, f / 4,
+                            (get<1>() + get<3>()) / f,
+                            (get<6>() + get<2>()) / f};
+    } else if (d[1] > d[2] && d[0] < d[1] && d[0] < -d[2]) {
+      value_type f = 2 * std::sqrt(1 - d[0] + d[1] - d[2]);
+      return UnitQuaternion{(get<6>() - get<2>()) / f,
+                            (get<1>() + get<3>()) / f, f / 4,
+                            (get<5>() + get<7>()) / f};
+    } else {
+      value_type f = 2 * std::sqrt(1 - d[0] - d[1] + d[2]);
+      return UnitQuaternion{(get<1>() - get<3>()) / f,
+                            (get<6>() + get<2>()) / f,
+                            (get<5>() + get<7>()) / f, f / 4};
+    }
+  }
+};
+
 template <IsMatrix M, IsMatrix N>
 constexpr auto operator*(M const& m1, N const& m2) {
-  auto r1 = slice<0, 3, 1>(m1);
-  auto r2 = slice<3, 6, 1>(m1);
-  auto r3 = slice<6, 9, 1>(m1);
-  auto c1 = slice<0, 9, 3>(m2);
-  auto c2 = slice<1, 9, 3>(m2);
-  auto c3 = slice<2, 9, 3>(m2);
-  return Matrix3{dot(r1, c1), dot(r1, c2), dot(r1, c3),
-                 dot(r2, c1), dot(r2, c2), dot(r2, c3),
-                 dot(r3, c1), dot(r3, c2), dot(r3, c3)};
+  return Matrix3{m1[0] * m2[0] + m1[1] * m2[3] + m1[2] * m2[6],
+                 m1[0] * m2[1] + m1[1] * m2[4] + m1[2] * m2[7],
+                 m1[0] * m2[2] + m1[1] * m2[5] + m1[2] * m2[8],
+                 m1[3] * m2[0] + m1[4] * m2[3] + m1[5] * m2[6],
+                 m1[3] * m2[1] + m1[4] * m2[4] + m1[5] * m2[7],
+                 m1[3] * m2[2] + m1[4] * m2[5] + m1[5] * m2[8],
+                 m1[6] * m2[0] + m1[7] * m2[3] + m1[8] * m2[6],
+                 m1[6] * m2[1] + m1[7] * m2[4] + m1[8] * m2[7],
+                 m1[6] * m2[2] + m1[7] * m2[5] + m1[8] * m2[8]};
+}
+
+template <IsMatrix M, IsMatrix N, int I = 0>
+constexpr bool operator==(M const& m1, N const& m2) {
+  if constexpr (I < M::size) {
+    if (m1[I] != m2[I]) {
+      return false;
+    } else {
+      return operator== <M, N, I + 1>(m1, m2);
+    }
+  } else {
+    return true;
+  }
 }
 
 template <>
-constexpr auto operator*
-    <RotationMatrix, RotationMatrix>(RotationMatrix const& m1,
-                                     RotationMatrix const& m2) {
-  auto r1 = slice<0, 3, 1>(m1);
-  auto r2 = slice<3, 6, 1>(m1);
-  auto r3 = slice<6, 9, 1>(m1);
-  auto c1 = slice<0, 9, 3>(m2);
-  auto c2 = slice<1, 9, 3>(m2);
-  auto c3 = slice<2, 9, 3>(m2);
-  return RotationMatrix{dot(r1, c1), dot(r1, c2), dot(r1, c3),
-                        dot(r2, c2), dot(r2, c3), dot(r3, c3)};
+constexpr auto operator* <Tensor, Tensor>(Tensor const& t1, Tensor const& t2) {
+  return Tensor{t1[0] * t2[0] + t1[1] * t2[1] + t1[2] * t2[2],
+                t1[0] * t2[1] + t1[1] * t2[4] + t1[2] * t2[5],
+                t1[0] * t2[2] + t1[1] * t2[5] + t1[2] * t2[8],
+                t1[1] * t2[1] + t1[4] * t2[4] + t1[5] * t2[5],
+                t1[1] * t2[2] + t1[4] * t2[5] + t1[5] * t2[8],
+                t1[2] * t2[2] + t1[5] * t2[5] + t1[8] * t2[8]};
 }
 
 template <IsMatrix M> constexpr auto operator*(M const& m, Vector3 const& v) {
-  return Vector3{dot(slice<0, 3, 1>(m), v), dot(slice<3, 6, 1>(m), v),
-                 dot(slice<6, 9, 1>(m), v)};
+  return Vector3{m[0] * v[0] + m[1] * v[1] + m[2] * v[2],
+                 m[3] * v[0] + m[4] * v[1] + m[5] * v[2],
+                 m[6] * v[0] + m[7] * v[1] + m[8] * v[2]};
 }
 
 } // namespace attitude

@@ -22,22 +22,11 @@ Matrix3 get_random_matrix() {
   return Matrix3(r(), r(), r(), r(), r(), r(), r(), r(), r());
 }
 
-RotationMatrix get_random_rotation_matrix() {
-  return RotationMatrix(r(), r(), r(), r(), r(), r());
+Tensor get_random_tensor() {
+  return Tensor(r(), r(), r(), r(), r(), r());
 }
 
-static void benchmark_method_mul(benchmark::State& state) {
-  Quaternion q1 = get_random_quaternion();
-  Quaternion q2 = get_random_quaternion();
-  benchmark::DoNotOptimize(q1);
-  benchmark::DoNotOptimize(q2);
-  for (auto _ : state) {
-    auto value = q1.mul(q2);
-    benchmark::DoNotOptimize(value);
-  }
-}
-
-static void benchmark_operator_mul(benchmark::State& state) {
+static void benchmark_quaternion_mul(benchmark::State& state) {
   Quaternion q1 = get_random_quaternion();
   Quaternion q2 = get_random_quaternion();
   benchmark::DoNotOptimize(q1);
@@ -59,19 +48,18 @@ static void benchmark_matrix_mul(benchmark::State& state) {
   }
 }
 
-static void benchmark_rotation_matrix_mul(benchmark::State& state) {
-  RotationMatrix m1 = get_random_rotation_matrix();
-  RotationMatrix m2 = get_random_rotation_matrix();
-  benchmark::DoNotOptimize(m1);
-  benchmark::DoNotOptimize(m2);
+static void benchmark_tensor_mul(benchmark::State& state) {
+  Tensor t1 = get_random_tensor();
+  Tensor t2 = get_random_tensor();
+  benchmark::DoNotOptimize(t1);
+  benchmark::DoNotOptimize(t2);
   for (auto _ : state) {
-    auto value = m1 * m2;
+    auto value = t1 * t2;
     benchmark::DoNotOptimize(value);
   }
 }
 
-BENCHMARK(benchmark_method_mul);
-BENCHMARK(benchmark_operator_mul);
+BENCHMARK(benchmark_quaternion_mul);
 BENCHMARK(benchmark_matrix_mul);
-BENCHMARK(benchmark_rotation_matrix_mul);
+BENCHMARK(benchmark_tensor_mul);
 BENCHMARK_MAIN();
