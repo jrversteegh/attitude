@@ -361,9 +361,9 @@ struct Matrix3 : Components<9> {
 };
 
 /**
- * Rotation Matrix
+ * Tensor
  *
- * Matrix representation of orientation or rotation.
+ * Symmetric 3x3 matrix
  */
 struct Tensor : Components<6> {
   using Components<6>::Components;
@@ -394,6 +394,11 @@ struct Tensor : Components<6> {
   }
 };
 
+/**
+ * Rotation Matrix
+ *
+ * Matrix representation of orientation or rotation.
+ */
 struct RotationMatrix : private Matrix3 {
   explicit constexpr RotationMatrix(UnitQuaternion const& q)
       : Matrix3{sqr(q[0]) + sqr(q[1]) - sqr(q[2]) - sqr(q[3]),
