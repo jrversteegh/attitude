@@ -326,6 +326,11 @@ struct UnitQuaternion : protected Quaternion {
  */
 struct HeadingPitchRoll : Components<3> {
   using Components<3>::Components;
+  explicit constexpr HeadingPitchRoll(UnitQuaternion const& q)
+      : Components{ /* TODO */ } {}
+  explicit operator UnitQuaternion() const {
+    return UnitQuaterion{ /* TODO */ };
+  }
 };
 
 /**
@@ -339,6 +344,15 @@ struct HeadingPitchRoll : Components<3> {
  */
 struct RotationVector : Vector3 {
   using Vector3::Vector3;
+  explicit constexpr RotationVector(UnitQuaternion const& q)
+      : Vector3{ q.i(), q.j(), q.k()  } {
+        *this *=  2 * std::acos(q.r()) / std::sqrt(1 - q.r() * q.r())
+      }
+  explicit operator UnitQuaternion() const {
+    return UnitQuaternion{
+      lenght(), get<0>() * 0.5, get<1>() * 0.5, get<2>() * 0.5
+    }
+  }
 };
 
 template <typename M> std::string matrix_to_string(M const& m) {
