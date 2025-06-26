@@ -13,6 +13,8 @@
 
 #cmakedefine NUMBER_FORMAT @NUMBER_FORMAT@
 
+namespace attitude {
+
 #ifdef NUMBER_FORMAT
 #if (NUMBER_FORMAT == double)
   using Number = double;
@@ -24,3 +26,5 @@
 #else
   using Number = float;
 #endif
+
+}

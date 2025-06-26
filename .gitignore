@@ -4,6 +4,7 @@
 /include/attitude/version.h
 /include/attitude/config.h
 /src/revision.txt
+/src/attitudexx/attitudexx.cpython-*.so
 /setup.py
 /CMakeSettings.json
 /CMakeUserPresets.json

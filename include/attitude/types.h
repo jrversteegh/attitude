@@ -13,6 +13,9 @@
 
 #include <fmt/format.h>
 
+#include <trix/matrix.h>
+#include <trix/vector.h>
+
 #include "config.h"
 #include "utils.h"
 

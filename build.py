@@ -16,9 +16,14 @@ from setuptools.command import build_ext
 
 module_name = "attitudexx"
 
+if "CXX" in os.environ:
+    compiler = os.environ["CXX"]
+else:
+    compiler = "g++-15"
+
 on_windows = platform.system().startswith("Win")
-script_dir = Path(os.path.dirname(os.path.realpath(__file__)))
-source_dir = script_dir / "src" / "attitude"
+script_dir = Path(__file__).absolute().parent
+source_dir = script_dir / "src" / "attitudexx"
 attitudexx_dir = source_dir
 build_dir = script_dir / "build"
 python = sys.executable
@@ -59,14 +64,20 @@ def build_module(build_type, config=""):
     win_flags = "-DCMAKE_POLICY_DEFAULT_CMP0091=NEW" if on_windows else ""
     config_flag = f"--config {build_type}" if on_windows else ""
     version, date = get_project_version_and_date()
+    number_format = (
+        f"-DNUMBER_FORMAT={os.environ['NUMBER_FORMAT']}"
+        if "NUMBER_FORMAT" in os.environ
+        else ""
+    )
     with dir_context(build_dir):
         if os.system(
             f"conan install -of conan --build missing -s build_type={build_type} {script_dir}"
         ):
             raise Exception("Failed to run conan")
         if os.system(
-            f"{cmake} -DPYTHON_EXECUTABLE={python} -DCMAKE_BUILD_TYPE={build_type}"
+            f"{cmake} {number_format} -DPYTHON_EXECUTABLE={python} -DCMAKE_BUILD_TYPE={build_type}"
             f" -DVERSION={version} -DDATE={date} -DBUILD_PYTHON=1 -DBUILD_TESTS=1 -DBUILD_SHARED=1"
+            f" -DCMAKE_CXX_COMPILER={compiler} -G Ninja"
             f" -DCMAKE_TOOLCHAIN_FILE=conan/conan_toolchain.cmake {config} {win_flags} {script_dir}"
         ):
             raise Exception("Failed to configure with cmake")

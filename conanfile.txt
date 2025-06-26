@@ -1,8 +1,9 @@
 [requires]
 pybind11/2.13.6
-boost/1.86.0
-fmt/11.0.0
+boost/1.88.0
+fmt/11.2.0
 benchmark/1.9.1
+trix/0.1.0
 
 [generators]
 CMakeDeps
