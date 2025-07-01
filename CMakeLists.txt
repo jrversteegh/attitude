@@ -4,10 +4,9 @@ cmake_minimum_required(VERSION 3.20.0)
 
 project(attitude)
 
-option(NUMBER_FORMAT "Format/precision to use for numbers: float or double" float)
-
 set (CMAKE_CXX_STANDARD 23)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
+set (CMAKE_CXX_FLAGS "-Wall -Wextra -fmax-errors=1")
 set (BUILD_SHARED_LIBS ON)
 if(NOT DEFINED ${CMAKE_BUILD_TYPE})
   set (CMAKE_BUILD_TYPE "Release")
@@ -32,6 +31,7 @@ if(BUILD_TESTS)
   find_package(benchmark REQUIRED)
 endif()
 
+find_package(fmt 11.2.0 REQUIRED)
 find_package(trix 0.1.0 REQUIRED)
 
 execute_process(COMMAND git rev-parse --short HEAD OUTPUT_VARIABLE GITREV)
@@ -51,8 +51,9 @@ endif()
 include_directories(
   ${Boost_INCLUDE_DIR}
   ${pybind11_INCLUDE_DIR}
-  ${ATTITUDE_INCLUDE_DIR}
+  ${fmt_INCLUDE_DIR}
   ${trix_INCLUDE_DIR}
+  ${ATTITUDE_INCLUDE_DIR}
 )
 add_compile_definitions(
   FMT_HEADER_ONLY=1

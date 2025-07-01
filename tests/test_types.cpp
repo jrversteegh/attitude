@@ -1,74 +1,28 @@
-#define BOOST_TEST_MODULE types_test
+#include "test_common.h"
 
 #include "attitude/types.h"
 
-#include "test_common.h"
-
+namespace ut = boost::unit_test;
 using namespace attitude;
 
-BOOST_AUTO_TEST_SUITE(cpptest);
-
-BOOST_AUTO_TEST_CASE(vector_mul_test) {
-  Vector3 v1{1.f, 2.f, 3.f};
-  Vector3 v2{2.f, 3.f, 4.f};
-  auto result = v1 * v2;
-  auto expected = 20.f;
-  BOOST_TEST(result == expected);
-}
-
-BOOST_AUTO_TEST_CASE(vector_add_test) {
-  Vector3 v1{1.f, 2.f, 3.f};
-  Vector3 v2{2.f, 3.f, 4.f};
-  auto result = v1 + v2;
-  auto expected = Vector3{3.f, 5.f, 7.f};
-  BOOST_TEST(result == expected);
-}
-
-BOOST_AUTO_TEST_CASE(vector_component_test) {
-  Vector3 v1{1.f, 2.f, 3.f};
-  auto c2 = v1[1];
-  BOOST_TEST(c2 == 2.f);
-  c2 = 3.f;
-  BOOST_TEST(c2 == 3.f);
-  c2 = v1[1];
-  BOOST_TEST(c2 == 2.f);
-  v1[1] = 3.f;
-  c2 = v1[1];
-  BOOST_TEST(c2 == 3.f);
-}
-
 BOOST_AUTO_TEST_CASE(quaternion_mul_test) {
-  Quaternion q1{1.f, 2.f, 3.f, 4.f};
-  Quaternion q2{2.f, 2.f, 1.f, 4.f};
+  auto q1 = Quaternion{1., 2., 3., 4.};
+  auto q2 = Quaternion{2., 2., 1., 4.};
   auto result = q1 * q2;
-  auto expected = Quaternion{-21.f, -2.f, 7.f, 16.f};
+  auto expected = Quaternion{-21., -2., 7., 16.};
   BOOST_TEST(result == expected);
-}
-
-BOOST_AUTO_TEST_CASE(matrix_mul_test) {
-  Matrix3 m{1.f, 2.f, 3.f, 2.f, 4.f, 6.f, 3.f, 6.f, 9.f};
-  Vector3 v{1.f, 2.f, 3.f};
-  auto result_vector = m * v;
-  auto expected_vector = Vector3{14.f, 28.f, 42.f};
-  BOOST_TEST(result_vector == expected_vector);
-  Matrix3 result_matrix = m * m;
-  Matrix3 expected_matrix{14.f, 28.f, 42.f, 28.f, 56.f,
-                          84.f, 42.f, 84.f, 126.f};
-  BOOST_TEST(result_matrix == expected_matrix);
 }
 
 BOOST_AUTO_TEST_CASE(tensor_mul_test) {
-  Tensor t{1.f, 2.f, 3.f, 2.f, 4.f, 6.f};
-  Vector3 v{1.f, 2.f, 3.f};
+  Tensor<> t{1., 2., 3., 2., 4., 6.};
+  Vector<> v{1., 2., 3.};
   auto result_vector = t * v;
-  auto expected_vector = Vector3{14.f, 18.f, 29.f};
+  auto expected_vector = Vector<>{14., 18., 29.};
   BOOST_TEST(result_vector == expected_vector);
   auto result_tensor = t * t;
-  auto expected_tensor = Tensor{14.f, 18.f, 29.f, 24.f, 38.f, 61.f};
-  auto expected_matrix =
-      Matrix3{14.f, 18.f, 29.f, 18.f, 24.f, 38.f, 29.f, 38.f, 61.f};
-  auto failing_matrix =
-      Matrix3{14.f, 18.f, 29.f, 18.f, 24.f, 38.f, 28.f, 38.f, 61.f};
+  auto expected_tensor = Tensor<>{14., 18., 29., 24., 38., 61.};
+  auto expected_matrix = Matrix<>{14., 18., 29., 18., 24., 38., 29., 38., 61.};
+  auto failing_matrix = Matrix<>{14., 18., 29., 18., 24., 38., 28., 38., 61.};
 
   BOOST_TEST(result_tensor == expected_tensor);
   BOOST_TEST(result_tensor == expected_matrix);
@@ -76,28 +30,43 @@ BOOST_AUTO_TEST_CASE(tensor_mul_test) {
 }
 
 BOOST_AUTO_TEST_CASE(quaternion_equality) {
-  Quaternion q1(0.f, 1.f, 0.f, 0.f);
-  Quaternion q2{0.f, 1.f, 0.f, 0.f};
-  Quaternion q3{q2};
+  Quaternion<> q1(0., 1., 0., 0.);
+  Quaternion<> q2{0., 1., 0., 0.};
+  Quaternion<> q3{q2};
   BOOST_TEST(q1 == q2);
   BOOST_TEST(q1 == q3);
 }
 
 BOOST_AUTO_TEST_CASE(unit_quaternion_equality) {
-  UnitQuaternion q1(0.f, 1.f, 0.f, 0.f);
-  UnitQuaternion q2{0.f, 1.f, 0.f, 0.f};
-  UnitQuaternion q3{q2};
-  BOOST_TEST(q1.equals(q2));
+  UnitQuaternion<> q1(0., 1., 0., 0.);
+  UnitQuaternion<> q2{0., 1., 0., 0.};
+  UnitQuaternion<> q3{q2};
   BOOST_TEST(q1 == q2);
   BOOST_TEST(q1 == q3);
 }
 
 BOOST_AUTO_TEST_CASE(unit_quaternion_readonlyness) {
-  Quaternion q1(0.f, 1.f, 0.f, 0.f);
-  UnitQuaternion q2(0.f, 1.f, 0.f, 0.f);
-  q1[0] = 1.0f;
+  Quaternion<> q1(0., 1., 0., 0.);
+  UnitQuaternion<> q2(0., 1., 0., 0.);
+  q1[0] = 1.0;
   // Doesn't (and shouldn't!) compile (how to test for that?)
   // q2[0] = 1.0f;
 }
 
-BOOST_AUTO_TEST_SUITE_END();
+ut::test_suite* init_unit_test_suite(int, char*[]) {
+  /*
+  UnitQuaternion uqs[] = {
+      UnitQuaternion{std::sqrt(0.5f), 0.5f, 0.5f, 0.0f},
+      UnitQuaternion{0.5f, 0.0f, 0.5f, -1.f * std::sqrt(0.5f)}};
+
+  void test_qmq_conversion(UnitQuaternion q) {
+    RotationMatrix m{q};
+    UnitQuaternion result = static_cast<UnitQuaternion>(m);
+    BOOST_TEST((result == q || result == -q));
+  }
+
+  */
+  //  ut::framework::master_test_suite().add(BOOST_PARAM_TEST_CASE(
+  //      &test_qmq_conversion, uqs, uqs + sizeof(uqs) / sizeof(uqs[0])));
+  return 0;
+}

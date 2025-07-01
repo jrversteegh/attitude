@@ -11,20 +11,25 @@
  * Conditional includes and definitions of optional packages here
  */
 
+#ifndef NUMBER_FORMAT
 #cmakedefine NUMBER_FORMAT @NUMBER_FORMAT@
+#endif
+#ifndef FORMAT_STRING
+#cmakedefine NUMBER_FORMAT @NUMBER_FORMAT@
+#endif
 
 namespace attitude {
 
 #ifdef NUMBER_FORMAT
-#if (NUMBER_FORMAT == double)
+  using Number = NUMBER_FORMAT;
+#else
   using Number = double;
-#elif (NUMBER_FORMAT == float)
-  using Number = float;
-#else
-#error "Unexpected number format"
 #endif
+
+#ifdef FORMAT_STRING
+#define attitude_fmtstr FORMAT_STRING
 #else
-  using Number = float;
+#define attitude_fmtstr "{}"
 #endif
 
 }

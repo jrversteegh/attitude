@@ -7,6 +7,10 @@
 
 using namespace attitude;
 
+using Q = Quaternion<>;
+using M = Matrix<>;
+using T = Tensor<>;
+
 auto r() {
   static std::random_device rd;
   static std::mt19937 gen(rd());
@@ -14,21 +18,21 @@ auto r() {
   return dis(gen);
 }
 
-Quaternion get_random_quaternion() {
-  return Quaternion{r(), r(), r(), r()};
+Q get_random_quaternion() {
+  return Q{r(), r(), r(), r()};
 }
 
-Matrix3 get_random_matrix() {
-  return Matrix3(r(), r(), r(), r(), r(), r(), r(), r(), r());
+M get_random_matrix() {
+  return M(r(), r(), r(), r(), r(), r(), r(), r(), r());
 }
 
-Tensor get_random_tensor() {
-  return Tensor(r(), r(), r(), r(), r(), r());
+T get_random_tensor() {
+  return T(r(), r(), r(), r(), r(), r());
 }
 
 static void benchmark_quaternion_mul(benchmark::State& state) {
-  Quaternion q1 = get_random_quaternion();
-  Quaternion q2 = get_random_quaternion();
+  Q q1 = get_random_quaternion();
+  Q q2 = get_random_quaternion();
   benchmark::DoNotOptimize(q1);
   benchmark::DoNotOptimize(q2);
   for (auto _ : state) {
@@ -38,8 +42,8 @@ static void benchmark_quaternion_mul(benchmark::State& state) {
 }
 
 static void benchmark_matrix_mul(benchmark::State& state) {
-  Matrix3 m1 = get_random_matrix();
-  Matrix3 m2 = get_random_matrix();
+  M m1 = get_random_matrix();
+  M m2 = get_random_matrix();
   benchmark::DoNotOptimize(m1);
   benchmark::DoNotOptimize(m2);
   for (auto _ : state) {
@@ -49,8 +53,8 @@ static void benchmark_matrix_mul(benchmark::State& state) {
 }
 
 static void benchmark_tensor_mul(benchmark::State& state) {
-  Tensor t1 = get_random_tensor();
-  Tensor t2 = get_random_tensor();
+  T t1 = get_random_tensor();
+  T t2 = get_random_tensor();
   benchmark::DoNotOptimize(t1);
   benchmark::DoNotOptimize(t2);
   for (auto _ : state) {
