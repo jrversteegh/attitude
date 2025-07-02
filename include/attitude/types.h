@@ -39,7 +39,6 @@ template <size_t N, typename T = Number>
 struct Components {
   constexpr static size_t const components = N;
   using value_type = T;
-  constexpr static auto indices = std::make_index_sequence<N>{};
 
   template <typename... Args>
     requires(sizeof...(Args) == N)
@@ -59,7 +58,7 @@ struct Components {
   template <ComponentsConcept C>
     requires(C::components == components)
   constexpr bool operator==(C const& other) const {
-    return equals(other, indices);
+    return equals(other, std::make_index_sequence<components>{});
   }
 
   constexpr T operator[](size_t const i) const {
@@ -75,11 +74,18 @@ struct Components {
     }
   }
 
-  constexpr Components operator-() const {
-    return Components{} - *this;
+  template <size_t... Is>
+  constexpr auto negate(this auto&& self, std::index_sequence<Is...>) {
+    using ReturnType = decltype(self);
+    return ReturnType{(-self[Is])...};
   }
 
-  operator std::string() const {
+  constexpr auto operator-() const {
+    return negate(std::make_index_sequence<components>{});
+    // return Components{} - *this;
+  }
+
+  constexpr operator std::string() const {
     return fmt::format(attitude_fmtstr, fmt::join(c_, ", "));
   }
 
@@ -124,29 +130,40 @@ struct MutableComponents : public Components<N, T> {
                 "Expected Components to satisfy ComponentsConcept");
 };
 
-template <ComponentsConcept T>
-constexpr decltype(auto) operator+(T const& c1, T const& c2) {
-  T result{c1};
-  result += c2;
-  return result;
+template <ComponentsConcept C1, ComponentsConcept C2, size_t... Is>
+constexpr auto plus(C1 const& c1, C2 const& c2, std::index_sequence<Is...>) {
+  return std::common_type<C1, C2>{(c1[Is] + c2[Is])...};
+}
+
+template <ComponentsConcept C1, ComponentsConcept C2, size_t... Is>
+constexpr auto minus(C1 const& c1, C2 const& c2, std::index_sequence<Is...>) {
+  return std::common_type<C1, C2>{(c1[Is] - c2[Is])...};
+}
+
+template <ComponentsConcept C, std::convertible_to<typename C::value_type> S,
+          size_t... Is>
+constexpr auto times(C const& c, S const s, std::index_sequence<Is...>) {
+  return C{(c[Is] * s)...};
+}
+
+template <ComponentsConcept C1, ComponentsConcept C2>
+  requires(C1::components == C2::components)
+constexpr auto operator+(C1 const& c1, C2 const& c2) {
+  return plus(c1, c2, std::make_index_sequence<C1::components>{});
 };
 
-template <ComponentsConcept T>
-constexpr decltype(auto) operator-(T const& c1, T const& c2) {
-  T result{c1};
-  result -= c2;
-  return result;
+template <ComponentsConcept C1, ComponentsConcept C2>
+constexpr auto operator-(C1 const& c1, C2 const& c2) {
+  return minus(c1, c2, std::make_index_sequence<C1::components>{});
 };
 
 template <ComponentsConcept C, std::convertible_to<typename C::value_type> S>
-constexpr decltype(auto) operator*(C const& c, S const s) {
-  C result{c};
-  result *= s;
-  return result;
+constexpr auto operator*(C const& c, S const s) {
+  return times(c, s, std::make_index_sequence<C::components>{});
 };
 
 template <ComponentsConcept C, std::convertible_to<typename C::value_type> S>
-constexpr decltype(auto) operator*(S const s, C const& c) {
+constexpr auto operator*(S const s, C const& c) {
   return c * s;
 };
 
@@ -158,8 +175,33 @@ concept QuaternionConcept = ComponentsConcept<Q> && requires(Q const q) {
   { q.k() } -> std::convertible_to<typename Q::value_type>;
 };
 
+template <typename Q, typename T>
+struct QuaternionComponents {
+  constexpr T r() const {
+    return static_cast<Q>(*this)[0];
+  }
+  constexpr T i() const {
+    return static_cast<Q>(*this)[1];
+  }
+  constexpr T j() const {
+    return static_cast<Q>(*this)[2];
+  }
+  constexpr T k() const {
+    return static_cast<Q>(*this)[3];
+  }
+
+  constexpr Q adjoint() const {
+    return Q(r(), -i(), -j(), -k());
+  }
+
+  explicit constexpr operator Vector<T>() const {
+    return Vector<T>(i(), j(), k());
+  }
+};
+
 template <typename T = Number>
-struct Quaternion : public MutableComponents<4, T> {
+struct Quaternion : MutableComponents<4, T>,
+                    QuaternionComponents<Quaternion<T>, T> {
   using Base = MutableComponents<4, T>;
   using Base::Base;
   template <std::convertible_to<T> S>
@@ -171,35 +213,14 @@ struct Quaternion : public MutableComponents<4, T> {
 
   using Base::operator==;
 
-  constexpr Number r() const {
-    return (*this)[0];
-  }
-  constexpr Number i() const {
-    return (*this)[1];
-  }
-  constexpr Number j() const {
-    return (*this)[2];
-  }
-  constexpr Number k() const {
-    return (*this)[3];
-  }
-
-  constexpr Quaternion adjoint() const {
-    return Quaternion(r(), -i(), -j(), -k());
-  }
-
   template <size_t... Is>
-  constexpr Number
+  constexpr T
   norm(std::index_sequence<Is...> is = std::make_index_sequence<4>{}) const {
     return std::sqrt((... + ((*this)[Is] * (*this)[Is])));
   }
 
-  explicit constexpr operator Vector<T>() const {
-    return Vector<T>(i(), j(), k());
-  }
-
-  constexpr Quaternion inverse() const {
-    Quaternion result = adjoint();
+  constexpr auto inverse() const {
+    Quaternion result = this->adjoint();
     result /= norm();
     return result;
   }
@@ -219,28 +240,27 @@ constexpr auto operator*(Q1 const& q1, Q2 const& q2) {
 }
 
 template <typename T = Number>
-struct UnitQuaternion : protected Quaternion<T> {
-  using Base = Quaternion<T>;
-  constexpr UnitQuaternion(Number const r, Number const i, Number const j,
-                           Number const k)
+struct UnitQuaternion : Components<4, T>,
+                        QuaternionComponents<UnitQuaternion<T>, T> {
+  using Base = Components<4, T>;
+  using Base::Base;
+  constexpr UnitQuaternion(T const r, T const i, T const j, T const k)
       : Base{r, i, j, k} {}
-  constexpr UnitQuaternion(UnitQuaternion const& q) : Base{q} {}
-  using Base::Components;
-  using Base::components;
-  // using Base::operator==;
-  using Base::operator-;
-  using Base::i;
-  using Base::j;
-  using Base::k;
-  using Base::r;
-  using Base::str;
-  using Base::value_type;
-  constexpr Number operator[](size_t const i) const {
-    return Base::operator[](i);
+  template <QuaternionConcept Q>
+  constexpr UnitQuaternion(Q const& q) : Base{q.r(), q.i(), q.j(), q.k()} {}
+
+  using Base::operator==;
+
+  constexpr auto inverse() const {
+    return this->adjoint();
   }
-  constexpr UnitQuaternion inverse() const {
-    return UnitQuaternion(r(), -i(), -j(), -k());
+
+  constexpr T norm() const {
+    return 1;
   }
+
+  static_assert(QuaternionConcept<UnitQuaternion>,
+                "Expected UnitQuaternion to satisfy QuaternionConcept");
 };
 
 /**
@@ -307,8 +327,8 @@ struct RotationMatrix : trix::Matrix<3, 3, T> {
              sqr(q[0]) - sqr(q[1]) - sqr(q[2]) + sqr(q[3])} {}
   explicit operator UnitQuaternion<T>() const {
     using value_type = typename Base::value_type;
-    auto d = this->diagonal();
-    auto& m = *this;
+    auto const& d = this->diagonal();
+    auto const& m = *this;
     if (d[1] > -d[2] && d[0] > -d[1] && d[0] > -d[2]) {
       value_type f = 2 * std::sqrt(1 + d[0] + d[1] + d[2]);
       return UnitQuaternion<T>{f / 4, (m[1, 2] - m[2, 1]) / f,
@@ -336,6 +356,12 @@ struct Tensor : trix::SymmetricMatrix<3, T> {
   using Base = trix::SymmetricMatrix<3, T>;
   using Base::Base;
 };
+
+template <ComponentsConcept C>
+std::ostream& operator<<(std::ostream& out, C const& c) {
+  out << static_cast<std::string>(c);
+  return out;
+}
 
 } // namespace attitude
 

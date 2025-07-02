@@ -17,12 +17,12 @@ BOOST_AUTO_TEST_CASE(tensor_mul_test) {
   Tensor<> t{1., 2., 3., 2., 4., 6.};
   Vector<> v{1., 2., 3.};
   auto result_vector = t * v;
-  auto expected_vector = Vector<>{14., 18., 29.};
+  auto expected_vector = Vector<>{11., 20., 28.};
   BOOST_TEST(result_vector == expected_vector);
   auto result_tensor = t * t;
-  auto expected_tensor = Tensor<>{14., 18., 29., 24., 38., 61.};
-  auto expected_matrix = Matrix<>{14., 18., 29., 18., 24., 38., 29., 38., 61.};
-  auto failing_matrix = Matrix<>{14., 18., 29., 18., 24., 38., 28., 38., 61.};
+  auto expected_tensor = Tensor<>{9., 16., 29., 22., 40., 56.};
+  auto expected_matrix = Matrix<>{9., 16., 22., 16., 29., 40., 22., 40., 56.};
+  auto failing_matrix = Matrix<>{9., 16., 22., 16., 29., 41., 22., 40., 56.};
 
   BOOST_TEST(result_tensor == expected_tensor);
   BOOST_TEST(result_tensor == expected_matrix);
