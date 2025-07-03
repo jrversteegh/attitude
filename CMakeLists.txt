@@ -140,5 +140,9 @@ if(BUILD_TESTS)
 
   new_test(test_types)
   new_test(test_quaternion)
+  new_test(test_rotation_matrix)
+  new_test(test_rotation_vector)
+  new_test(test_euler_angles)
+
   new_benchmark(test_performance)
 endif()

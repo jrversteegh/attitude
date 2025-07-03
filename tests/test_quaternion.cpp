@@ -1,37 +1,43 @@
-#include <boost/test/included/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include "test_common.h"
 
-#include "attitude/types.h"
+#include "attitude/quaternion.h"
 
 namespace ut = boost::unit_test;
 
 using namespace attitude;
-using UQ = UnitQuaternion<>;
-using RM = RotationMatrix<>;
 
-UQ uqs[] = {UQ{std::sqrt(0.5), 0.5, 0.5, 0.0},
-            UQ{0.0, std::sqrt(0.5), 0.5, 0.5},
-            UQ{0.0, 0.5, std::sqrt(0.5), 0.5},
-            UQ{0.5, 0.0, 0.5, std::sqrt(0.5)},
-            UQ{std::sqrt(0.5), -0.5, 0.5, 0.0},
-            UQ{0.0, std::sqrt(0.5), -0.5, 0.5},
-            UQ{0.0, 0.5, std::sqrt(0.5), -0.5},
-            UQ{-0.5, 0.0, 0.5, std::sqrt(0.5)},
-            UQ{-1. * std::sqrt(0.5), 0.5, 0.5, 0.0},
-            UQ{0.0, -1. * std::sqrt(0.5), 0.5, 0.5},
-            UQ{0.0, 0.5, -1. * std::sqrt(0.5), 0.5},
-            UQ{0.5, 0.0, 0.5, -1. * std::sqrt(0.5)}};
-
-void test_qmq_conversion(UQ q) {
-  RM m{q};
-  UQ result = static_cast<UQ>(m);
-  BOOST_TEST_CONTEXT("result = " << result << ", q = " << q) {
-    BOOST_TEST((result == q || result == -q));
-  }
+BOOST_AUTO_TEST_CASE(quaternion_mul_test) {
+  auto q1 = Quaternion{1., 2., 3., 4.};
+  auto q2 = Quaternion{2., 2., 1., 4.};
+  auto result = q1 * q2;
+  auto expected = Quaternion{-21., -2., 7., 16.};
+  BOOST_TEST(result == expected);
 }
 
-ut::test_suite* init_unit_test_suite(int /*argc*/, char* /*argv*/[]) {
-  ut::framework::master_test_suite().add(BOOST_PARAM_TEST_CASE(
-      &test_qmq_conversion, uqs, uqs + sizeof(uqs) / sizeof(uqs[0])));
+BOOST_AUTO_TEST_CASE(quaternion_equality) {
+  Quaternion<> q1(0., 1., 0., 0.);
+  Quaternion<> q2{0., 1., 0., 0.};
+  Quaternion<> q3{q2};
+  BOOST_TEST(q1 == q2);
+  BOOST_TEST(q1 == q3);
+}
+
+BOOST_AUTO_TEST_CASE(unit_quaternion_equality) {
+  UnitQuaternion<> q1(0., 1., 0., 0.);
+  UnitQuaternion<> q2{0., 1., 0., 0.};
+  UnitQuaternion<> q3{q2};
+  BOOST_TEST(q1 == q2);
+  BOOST_TEST(q1 == q3);
+}
+
+BOOST_AUTO_TEST_CASE(unit_quaternion_readonlyness) {
+  Quaternion<> q1(0., 1., 0., 0.);
+  UnitQuaternion<> q2(0., 1., 0., 0.);
+  q1[0] = 1.0;
+  // Doesn't (and shouldn't!) compile (how to test for that?)
+  // q2[0] = 1.0f;
+}
+
+ut::test_suite* init_unit_test_suite(int, char*[]) {
   return 0;
 }

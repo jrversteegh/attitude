@@ -3,6 +3,7 @@
 
 #include <benchmark/benchmark.h>
 
+#include "attitude/quaternion.h"
 #include "attitude/types.h"
 
 using namespace attitude;
